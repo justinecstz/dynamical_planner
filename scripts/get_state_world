@@ -13,7 +13,7 @@ if __name__ == '__main__' :
    rospy.sleep(1.5) #laisser le temps a tf de s'initialiser
    ids = [0, 1, 2, 3, 4, 5, 6, 7] #trouver comment recuperer les ids des markers pour que le code puisse etre applique avec d'autres objets
   
-   lettersId = ["N", "N", [], "N", [], [], "B", "V"] #pour markers 0,1,3,6,7
+   lettersId = ["N", "N", [], "N", [], [], "B", "G"] #pour markers 0,1,3,6,7
    rate = rospy.Rate(2.0) #2 Hz, donc publication deux fois par seconde
 
    # listener.waitForTransform("marker/0","camera/1",rospy.Time.now(), rospy.Duration(0.01))
@@ -59,11 +59,11 @@ if __name__ == '__main__' :
          pub = rospy.Publisher('currentState', String, queue_size = 10)
          #rate = rospy.Rate(10) #10 Hz
       #ajout de la 4e lettre = main du robot
-      if "B" in state and "V" in state :
+      if "B" in state and "G" in state :
          state = state + "N"
-      elif "B" in state and not "V" in state :
-         state = state + "V"
-      elif "V" in state and not "B" in state :
+      elif "B" in state and not "G" in state :
+         state = state + "G"
+      elif "G" in state and not "B" in state :
          state = state + "B"
       if len(state) == 4 :
          rospy.loginfo(state)

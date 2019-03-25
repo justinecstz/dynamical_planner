@@ -4,7 +4,9 @@ import rospy
 import math
 import tf
 from std_msgs.msg import String
+from std_msgs.msg import Int32
 import numpy as np
+#from threading import lock
 
 markovMap = [[0, "GNBN", 0, 11, 2, 6], [1, "GBNN", 1, 6, 0, 10], [2, "BGNN", 0, 7, 1, 9], 
 [3, "BNGN", 0, 8, 2, 9], [4, "NGBN", 1, 11, 2, 7], [5, "NBGN", 1, 8, 2, 10],
@@ -12,6 +14,10 @@ markovMap = [[0, "GNBN", 0, 11, 2, 6], [1, "GBNN", 1, 6, 0, 10], [2, "BGNN", 0, 
 [9, "BNNG", 4, 2, 5, 3], [10, "NBNG", 3, 1, 5, 5], [11, "NNBG", 3, 0, 4, 4]]
 #pour l'instant, la demo est pre-enregistree
 demos = [["NGBN", "NNBG", "GNBN", "GNNB", "GBNN"], ["NBGN", "NBNG", "GBNN"], ["BGNN", "BNNG", "BNGN", "NNGB", "NBGN", "NBNG", "GBNN"]]
+goal = demos[0][-1]
+markovResults = []
+
+#self.lock = Lock()
 
 def reinforcementLearning(demos) :
 #definition of probability matrices for the 12 states and 6 actions
@@ -133,12 +139,54 @@ def reinforcementLearning(demos) :
 
    return markovResults
 
+def handler_state_msgs(data) :
+   #rospy.loginfo(data)
+   #print(data.data)
+   #pub = rospy.Publisher('action', Int32, run)
+   #with self.lock :
+
+   #FONCTIONNE DE /* a */
+   #/*
+   state = data.data
+   if state != goal :
+      plannerDuo = planner(markovResults,state)
+      optAction = plannerDuo[0]
+      #pub.publish(optAction)
+
+      if optAction == 0 :
+         print("pick(1)")
+      elif optAction == 1 :
+         print("pick(2)")
+      elif optAction == 2 :
+         print("pick(3)")
+      elif optAction == 3 :
+         print("place(1)")
+      elif optAction == 4 :
+         print("place(2)")
+      elif optAction == 5 :
+         print("place(3)")
+   else:
+      print("Goal reached")
+   #*/
+
+   #precondition = data.data 
+
+   #if precondition 
+
+# def run() :
+#    while not rospy.is_shutdown() :
+#       with self.lock
+#          rospy.Subscriber('action',Int32,print_actions)
+
+# def print_actions(data) :
+
+
+
 def planner(markovResults, initState) :
 
    policy = markovResults[0]
    goalID = markovResults[1]
    sequence = []
-
    #search for initStateID
    for k in np.arange(len(markovMap)) :
       if initState in markovMap[k] :
@@ -160,6 +208,8 @@ if __name__ == '__main__' :
    rospy.init_node('planner')
    rate = rospy.Rate(1.0)
 
+   global markovResults
+   markovResults = reinforcementLearning(demos)
    while not rospy.is_shutdown() :
-      rospy.Subscriber('stateTopic', String, callback) #when a message is received, callback is invoked w/ message as 1st arg
+      rospy.Subscriber('currentState', String, handler_state_msgs) #when a message is received, callback is invoked w/ message as 1st arg
       rate.sleep()
