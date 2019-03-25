@@ -56,7 +56,7 @@ if __name__ == '__main__' :
          #print(markersLeftToRight)
          #print(markersLeftToRight)
          #publisher
-         pub = rospy.Publisher('currentState', String, queue_size = 10)
+         pub = rospy.Publisher('stateTopic', String, queue_size = 10)
          #rate = rospy.Rate(10) #10 Hz
       #ajout de la 4e lettre = main du robot
       if "B" in state and "V" in state :
