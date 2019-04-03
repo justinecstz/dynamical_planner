@@ -9,7 +9,8 @@ import numpy as np
 
 if __name__ == '__main__' :
    rospy.init_node('getStateWolrd')
-   listener = tf.TransformListener(True, rospy.Duration(5)) #appel du constructeur
+   listenerMarkers = tf.TransformListener(True, rospy.Duration(5)) #appel du constructeur
+   listenerCubes = tf.TransformListener(True, rospy.Duration(5)) #appel du constructeur
    rospy.sleep(1.5) #laisser le temps a tf de s'initialiser
    ids = [0, 1, 2, 3, 4, 5, 6, 7] #trouver comment recuperer les ids des markers pour que le code puisse etre applique avec d'autres objets
   
@@ -30,35 +31,57 @@ if __name__ == '__main__' :
    while not rospy.is_shutdown() :
       state = ""
       visibleMarkers = []
+      visibleCubes = []
+      xPositionMarkers = []
+      xPositionCubes = []
       xPosition = []
-      markersLeftToRight = []
+      itemsLeftToRight = []
       index = []
+      visible = []
       for id_marker in ids :
          fullId = "marker/" + str(id_marker)
-         if listener.canTransform(fullId, "camera/1", rospy.Time.now() - rospy.Duration(1.0)) :
+         if listenerMarkers.canTransform(fullId, "camera/1", rospy.Time.now() - rospy.Duration(1.0)) :
             visibleMarkers.append(id_marker)
-            (position,quaternion) = listener.lookupTransform(fullId,"camera/1",rospy.Time(0))
-            xPosition.append(position[0])
+            (position,quaternion) = listenerMarkers.lookupTransform(fullId,"camera/1",rospy.Time(0))
+            xPositionMarkers.append(position[0])
+
+      if listenerCubes.canTransform("green", "camera/1",rospy.Time.now() - rospy.Duration(1.0)) :
+         visibleCubes.append("G")
+         (position,quaternion) = listenerCubes.lookupTransform("green","camera/1",rospy.Time(0))
+         xPositionCubes.append(position[0]*0.0009 + 0.2665)
+
+      if listenerCubes.canTransform("blue", "camera/1",rospy.Time.now() - rospy.Duration(1.0)) :
+         visibleCubes.append("B")
+         (position,quaternion) = listenerCubes.lookupTransform("blue","camera/1",rospy.Time(0))
+         xPositionCubes.append(position[0]*0.0009 + 0.2665)
+
+
+      visibleItems = visibleMarkers + visibleCubes
+      xPosition = xPositionMarkers + xPositionCubes
+
+      length = np.arange(len(visibleItems))
+      for k in length :
+         visible.append([visibleItems[k],xPosition[k]])
 
       x = np.array(xPosition)
       #print(visibleMarkers)
       #print(x) 
       x = np.argsort(x)
-
-      totalMarkers = len(visibleMarkers)
+      x = x[::-1]
+      #totalMarkers = len(visibleMarkers)
+      totalItems = len(visibleMarkers) + len(visibleCubes)
       i = 0
+      #print(visible)
+      for k in np.arange(totalItems) :
+         while xPosition[x[k]] != visible[i][1] :
+            i = i + 1
+         if visible[i][0] != "G" and visible[i][0] != "B" :
+            state = state + "N"
+         else :
+            state = state + visible[i][0]
+         i = 0 
 
-      while i < totalMarkers : #and not rospy.is_shutdown() :
-         markersLeftToRight.append(visibleMarkers[x[i]])   #left to right relatif, attention a la direction des axes !
-         index.append(i)
-         state = state + str(lettersId[markersLeftToRight[i]])
-         i = i + 1
-         #print(markersLeftToRight)
-         #print(markersLeftToRight)
-         #publisher
-         pub = rospy.Publisher('currentState', String, queue_size = 10)
-         #rate = rospy.Rate(10) #10 Hz
-      #ajout de la 4e lettre = main du robot
+      pub = rospy.Publisher('currentState', String, queue_size = 10)
       if "B" in state and "G" in state :
          state = state + "N"
       elif "B" in state and not "G" in state :
@@ -69,7 +92,34 @@ if __name__ == '__main__' :
          rospy.loginfo(state)
          pub.publish(state)
          rate.sleep()
-         #print(state)
+      #print(state)
+
+      #while i < totalMarkers : #and not rospy.is_shutdown() :
+      # while i < totalItems :
+      #    #markersLeftToRight.append(visibleMarkers[x[i]])   #left to right relatif, attention a la direction des axes !
+
+      #    index.append(i)
+      #    state = state + str(lettersId[markersLeftToRight[i]])
+      #    i = i + 1
+      #    #print(markersLeftToRight)
+      #    #print(markersLeftToRight)
+      #    #publisher
+      #    pub = rospy.Publisher('currentState', String, queue_size = 10)
+      #    #rate = rospy.Rate(10) #10 Hz
+      # #ajout de la 4e lettre = main du robot
+      # if "B" in state and "G" in state :
+      #    state = state + "N"
+      # elif "B" in state and not "G" in state :
+      #    state = state + "G"
+      # elif "G" in state and not "B" in state :
+      #    state = state + "B"
+      # if len(state) == 4 :
+      #    rospy.loginfo(state)
+      #    pub.publish(state)
+      #    rate.sleep()
+      #    #print(state)
+
+
 
 
    
