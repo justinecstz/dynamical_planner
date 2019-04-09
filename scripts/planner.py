@@ -4,7 +4,8 @@ import rospy
 import math
 import tf
 from std_msgs.msg import String
-from std_msgs.msg import Int32
+from std_msgs.msg import Float64MultiArray
+from rospy.numpy_msg import numpy_msg
 import numpy as np
 #from threading import lock
 
@@ -16,8 +17,94 @@ markovMap = [[0, "GNBN", 0, 11, 2, 6], [1, "GBNN", 1, 6, 0, 10], [2, "BGNN", 0, 
 demos = [["NGBN", "NNBG", "GNBN", "GNNB", "GBNN"], ["NBGN", "NBNG", "GBNN"], ["BGNN", "BNNG", "BNGN", "NNGB", "NBGN", "NBNG", "GBNN"]]
 goal = demos[0][-1]
 markovResults = []
+oldAction = 10
 
-#self.lock = Lock()
+jointPositionsP1 = 1*np.array([-0.044405747733462106, 1.19814689840694254, 0.1520219301975148, -1.607911064798659, -0.07193516616802327, 0.3915826375219599, -1.568347410379195])
+jointPositionsP2 = 1*np.array([0.644405747733462106, 1.15814689840694254, 0.1520219301975148, -1.607911064798659, -0.07193516616802327, 0.3915826375219599, -1.568347410379195]) 
+jointPositionsP3 = 1*np.array([1.344405747733462106, 1.19814689840694254, 0.1520219301975148, -1.607911064798659, -0.07193516616802327, 0.3915826375219599, -1.568347410379195])
+jointPositionsHome = 1*np.array([0.644405747733462106, 0.69814689840694254, 0.1520219301975148, -1.607911064798659, -0.07193516616802327, 0.7915826375219599, -1.568347410379195])
+
+pick1 = [jointPositionsP1, jointPositionsHome]
+pick2 = [jointPositionsP2, jointPositionsHome]
+pick3 = [jointPositionsP3, jointPositionsHome]
+place1 = [jointPositionsP1, jointPositionsHome]
+place2 = [jointPositionsP2, jointPositionsHome]
+place3 = [jointPositionsP3, jointPositionsHome]
+
+class PdCtrl:
+   def __init__(self):
+      self.ctrl_freq = 2
+      self.joint_names = ["iiwa_joint_1", "iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4", "iiwa_joint_5", "iiwa_joint_6", "iiwa_joint_7"]
+      self.joint_cmd_pub =  rospy.Publisher('/iiwa/PositionController/command', numpy_msg(Float64MultiArray),queue_size=10)
+
+   def send_cmd(self,command,time_stamp): #command = Float64MultiArray
+       next_joint_state = Float64MultiArray()
+
+       next_joint_state.data = command 
+       self.joint_cmd_pub.publish(next_joint_state)
+
+   def lin_ds(self,current_joint_position, target_state):
+       k = 0.001
+       A = np.array([[-k, 0, 0, 0, 0, 0, 0],
+                     [0, -k, 0, 0, 0, 0, 0],
+                     [0, 0, -k, 0, 0, 0, 0],
+                     [0, 0, 0, -k, 0, 0, 0],
+                     [0, 0, 0, 0, -k, 0, 0],
+                     [0, 0, 0, 0, 0, -k, 0],
+                     [0, 0, 0, 0, 0, 0, -k]])
+      
+       B = current_joint_position - target_state
+       B = np.transpose(B)
+       next_joint_state = np.matmul(A, B) + target_state
+       return next_joint_state
+
+   def do_action(self,action) :
+        rtol = 1e-4
+        atol = 1e-4
+        joint_states_msg = rospy.wait_for_message('iiwa/joint_states', numpy_msg(JointState))
+        current_position = joint_states_msg.position
+        if action == 0 :
+            desired_joint_state_1 = pick1[0]
+            desired_joint_state_2 = pick1[1]
+
+        elif action == 1 :
+            desired_joint_state_1 = pick2[0]
+            desired_joint_state_2 = pick2[1]
+
+        elif action == 2 :
+            desired_joint_state_1 = pick3[0]
+            desired_joint_state_2 = pick3[1]
+
+        elif action == 3 :
+            desired_joint_state_1 = place1[0]
+            desired_joint_state_2 = place1[1]
+
+        elif action == 4 :
+            desired_joint_state_1 = place2[0]
+            desired_joint_state_2 = place2[1]
+
+        elif action == 5 :
+            desired_joint_state_1 = place3[0]
+            desired_joint_state_2 = place3[1]        
+
+        while not np.allclose(desired_joint_state_1,current_position, rtol, atol) :
+            # print(desired_joint_state)
+            # print(current_position)
+            next_joint_state = controller.lin_ds(current_position, desired_joint_state_1)
+            controller.send_cmd(next_joint_state,time)
+            r.sleep()
+            joint_states_msg = rospy.wait_for_message('iiwa/joint_states', numpy_msg(JointState))
+            current_position = joint_states_msg.position
+
+        while not np.allclose(desired_joint_state_2,current_position, rtol, atol) :
+            # print(desired_joint_state)
+            # print(current_position)
+            next_joint_state = controller.lin_ds(current_position, desired_joint_state_2)
+            controller.send_cmd(next_joint_state,time)
+            r.sleep()
+            joint_states_msg = rospy.wait_for_message('iiwa/joint_states', numpy_msg(JointState))
+            current_position = joint_states_msg.position
+
 
 def reinforcementLearning(demos) :
 #definition of probability matrices for the 12 states and 6 actions
@@ -97,41 +184,45 @@ def reinforcementLearning(demos) :
    #print(reward)
 
    #construction of policy
-   policy = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-   oldPolicy = [i * 2 for i in policy]
+   # policy = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+   # oldPolicy = [i * 2 for i in policy]
+   policy = np.zeros((12,6))
+   oldPolicy = np.ones((12,6))
+   nbActions = 6
    U = np.zeros((12, 2))
    U[:,0], U[:,1] = 1, 2
    gamma = 0.8 
    epsilon = 0.1
    sumsOnActions = np.zeros((1, 6))
-   somme = 0
+   sum1 = 0
+   sum2 = 0
 
    #print(probaMatrices[5])
    #print(probaMatrices[5][1,1])
 
-   for i in np.arange(len(markovMap)) :
-   #for i in [0] :
-      #print("hello")
-      while oldPolicy[i] != policy[i] :
+   while not np.allclose(oldPolicy, policy) :
+      for i in np.arange(len(markovMap)) :
          while np.absolute(U[i, 0] - U[i, 1]) > epsilon :
             #print(np.absolute(U[i, 0] - U[i, 1]))
             U[i, 1] = U[i, 0]
             possibleActions = [markovMap[i][2], markovMap[i][4]]
             #print(possibleActions)
-            for j in possibleActions :
+            for j in np.arange(nbActions) :
                for k in np.arange(len(markovMap)) : #s'
-                  somme = somme + probaMatrices[j][i, k] * (reward[i, j] + gamma * U[k, 1])
+                  sum1 = sum1 + probaMatrices[j][i, k] * (reward[i, j] + gamma * U[k, 1])
                   #print(somme)
-            U[i, 0] = policy[i] * somme
+               sum2 = sum2 + sum1 * policy[i,j]
+            U[i, 0] = sum2
             #print(U)
-            somme = 0
-         oldPolicy[i] = policy[i]
-         for j in possibleActions :
+            sum1 = 0
+            sum2 = 0
+         oldPolicy[i,:] = policy[i,:]
+         for j in np.arange(nbActions) :
             for k in np.arange(len(markovMap)) :
-               somme = somme + probaMatrices[j][i, k] * (reward[i, j] + gamma * U[k, 1])
-            sumsOnActions[0, j] = somme
-            somme = 0
-         policy[i] = np.argmax(sumsOnActions)
+               sum1 = sum1 + probaMatrices[j][i, k] * (reward[i, j] + gamma * U[k, 1])
+            sumsOnActions[0, j] = sum1
+            sum1 = 0
+         policy[i,np.argmax(sumsOnActions)] = 1 
          sumsOnActions = np.zeros((1, 6))
    #print(policy)
 
@@ -142,51 +233,96 @@ def reinforcementLearning(demos) :
 def handler_state_msgs(data) :
    #rospy.loginfo(data)
    #print(data.data)
-   #pub = rospy.Publisher('action', Int32, run)
-   #with self.lock :
+   global oldAction
 
-   #FONCTIONNE DE /* a */
-   #/*
    state = data.data
    if state != goal :
       plannerDuo = planner(markovResults,state)
       optAction = plannerDuo[0]
-      #pub.publish(optAction)
+      time = rospy.Time.now()
+      r = rospy.Rate(controller.ctrl_freq)
+      # pub.publish(optAction)
+      # rospy.Subscriber('xPositions', Float32MultiArray, returnX)
+      #rospy.Subscriber('yPositions', String, returnY)
+      #rospy.Subscriber('zPositions', String, returnZ)
 
-      if optAction == 0 :
-         print("pick(1)")
-      elif optAction == 1 :
-         print("pick(2)")
-      elif optAction == 2 :
-         print("pick(3)")
-      elif optAction == 3 :
-         print("place(1)")
-      elif optAction == 4 :
-         print("place(2)")
-      elif optAction == 5 :
-         print("place(3)")
+      if optAction == 0 : # pick(1)
+         if oldAction != 0 :
+            print("pick(1)")
+            oldAction = 0
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP1
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+      elif optAction == 1 : # pick(2)
+         if oldAction != 1 :
+            print("pick(2)")
+            oldAction = 1
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP2
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+      elif optAction == 2 : # pick(3)
+         if oldAction != 2 :
+            print("pick(3)")
+            oldAction = 2
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP3
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+      elif optAction == 3 : # place(1)
+         if oldAction != 3 :
+            print("place(1)")
+            oldAction = 3
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP1
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+      elif optAction == 4 : # place(2)
+         if oldAction != 4 :
+            print("place(2)")
+            oldAction = 4
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP2
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+      elif optAction == 5 : # place(3)
+         if oldAction != 5 :
+            print("place(3)")
+            oldAction = 5
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP3
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+         
    else:
       print("Goal reached")
-   #*/
-
-   #precondition = data.data 
-
-   #if precondition 
-
-# def run() :
-#    while not rospy.is_shutdown() :
-#       with self.lock
-#          rospy.Subscriber('action',Int32,print_actions)
-
-# def print_actions(data) :
-
-
 
 def planner(markovResults, initState) :
 
    policy = markovResults[0]
    goalID = markovResults[1]
    sequence = []
+   nbActions = 6
+
    #search for initStateID
    for k in np.arange(len(markovMap)) :
       if initState in markovMap[k] :
@@ -195,7 +331,10 @@ def planner(markovResults, initState) :
 
    #initStateID = searchForID(initState)
    currentState = initStateID
-   optAction = policy[currentState]
+   for i in np.arange(nbActions) :
+      if policy[currentState,i] == 1 :
+         optAction = i 
+   
    if markovMap[currentState][2] == optAction :
       postcondition = markovMap[currentState][3] 
    elif markovMap[currentState][4] == optAction :
@@ -207,9 +346,12 @@ def planner(markovResults, initState) :
 if __name__ == '__main__' :
    rospy.init_node('planner')
    rate = rospy.Rate(1.0)
+   # controller.times_sync.registerCallback(controller.state_subscriber)
 
    global markovResults
    markovResults = reinforcementLearning(demos)
+   controller = PdCtrl()
+   #inserer position de depart = home
    while not rospy.is_shutdown() :
       rospy.Subscriber('currentState', String, handler_state_msgs) #when a message is received, callback is invoked w/ message as 1st arg
       rate.sleep()

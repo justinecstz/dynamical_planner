@@ -4,6 +4,8 @@ import rospy
 import math
 import tf
 from std_msgs.msg import String
+from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import MultiArrayDimension
 import numpy as np
 
 
@@ -15,7 +17,7 @@ if __name__ == '__main__' :
    ids = [0, 1, 2, 3, 4, 5, 6, 7] #trouver comment recuperer les ids des markers pour que le code puisse etre applique avec d'autres objets
   
    lettersId = ["N", "N", [], "N", [], [], "B", "G"] #pour markers 0,1,3,6,7
-   rate = rospy.Rate(2.0) #2 Hz, donc publication deux fois par seconde
+   rate = rospy.Rate(1.0) #2 Hz, donc publication deux fois par seconde
 
    # listener.waitForTransform("marker/0","camera/1",rospy.Time.now(), rospy.Duration(0.01))
    # transform = listener.lookupTransform("marker/0","camera/1",rospy.Time(0))
@@ -34,44 +36,66 @@ if __name__ == '__main__' :
       visibleCubes = []
       xPositionMarkers = []
       xPositionCubes = []
+      yPositionMarkers = []
+      yPositionCubes = []
+      zPositionMarkers = []
+      zPositionCubes = []
       xPosition = []
       itemsLeftToRight = []
       index = []
       visible = []
       for id_marker in ids :
          fullId = "marker/" + str(id_marker)
-         if listenerMarkers.canTransform(fullId, "camera/1", rospy.Time.now() - rospy.Duration(1.0)) :
+         # if listenerMarkers.canTransform(fullId, "camera/1", rospy.Time.now() - rospy.Duration(1.0)) :
+         if listenerMarkers.canTransform("camera/1", fullId, rospy.Time.now() - rospy.Duration(1.0)) :
             visibleMarkers.append(id_marker)
-            (position,quaternion) = listenerMarkers.lookupTransform(fullId,"camera/1",rospy.Time(0))
+            # (position,quaternion) = listenerMarkers.lookupTransform(fullId,"camera/1",rospy.Time(0))
+            (position,quaternion) = listenerMarkers.lookupTransform("camera/1", fullId, rospy.Time(0))
+            #print(position)
             xPositionMarkers.append(position[0])
+            yPositionMarkers.append(position[1])
+            zPositionMarkers.append(position[2])
 
-      if listenerCubes.canTransform("green", "camera/1",rospy.Time.now() - rospy.Duration(1.0)) :
+      if listenerCubes.canTransform("camera/1","green",rospy.Time.now() - rospy.Duration(1.0)) :
          visibleCubes.append("G")
-         (position,quaternion) = listenerCubes.lookupTransform("green","camera/1",rospy.Time(0))
-         xPositionCubes.append(position[0]*0.0009 + 0.2665)
+         (position,quaternion) = listenerCubes.lookupTransform("camera/1", "green", rospy.Time(0))
+         xPositionCubes.append(position[0]*0.0006-0.218) #y = 0.0009*x + 0.2665
+         yPositionCubes.append(position[1]*0.0007-0.1972)
+         zPositionCubes.append(position[2])
+         #print(position)
+         # print(xPositionCubes)
+         # print(yPositionCubes)
+         # print(zPositionCubes)
 
-      if listenerCubes.canTransform("blue", "camera/1",rospy.Time.now() - rospy.Duration(1.0)) :
+      if listenerCubes.canTransform("camera/1", "blue", rospy.Time.now() - rospy.Duration(1.0)) :
          visibleCubes.append("B")
-         (position,quaternion) = listenerCubes.lookupTransform("blue","camera/1",rospy.Time(0))
-         xPositionCubes.append(position[0]*0.0009 + 0.2665)
+         (position,quaternion) = listenerCubes.lookupTransform("camera/1","blue", rospy.Time(0))
+         xPositionCubes.append(position[0]*0.0006-0.218)
+         yPositionCubes.append(position[1]*0.0007-0.1972)
+         zPositionCubes.append(position[2])
 
 
       visibleItems = visibleMarkers + visibleCubes
       xPosition = xPositionMarkers + xPositionCubes
+      yPosition = yPositionMarkers + yPositionCubes
+      zPosition = zPositionMarkers + zPositionCubes
 
       length = np.arange(len(visibleItems))
       for k in length :
-         visible.append([visibleItems[k],xPosition[k]])
+         visible.append([visibleItems[k],xPosition[k],yPosition[k],zPosition[k]])
+
+      #print(visible)
 
       x = np.array(xPosition)
       #print(visibleMarkers)
       #print(x) 
       x = np.argsort(x)
-      x = x[::-1]
+      #x = x[::-1]
       #totalMarkers = len(visibleMarkers)
       totalItems = len(visibleMarkers) + len(visibleCubes)
       i = 0
-      #print(visible)
+      print(visible)
+
       for k in np.arange(totalItems) :
          while xPosition[x[k]] != visible[i][1] :
             i = i + 1
@@ -82,6 +106,23 @@ if __name__ == '__main__' :
          i = 0 
 
       pub = rospy.Publisher('currentState', String, queue_size = 10)
+      # pubX = rospy.Publisher('xPositions', Float32MultiArray, queue_size = 10)
+      # pubY = rospy.Publisher('yPositions', Float32MultiArray, queue_size = 10)
+      # pubZ = rospy.Publisher('zPositions', Float32MultiArray, queue_size = 10)
+
+      # positionToPub = Float32MultiArray()
+      # positionToPub.layout.dim.append(MultiArrayDimension())
+      # positionToPub.layout.dim.append(MultiArrayDimension())
+      # positionToPub.layout.dim[0].label = "height"
+      # positionToPub.layout.dim[1].label = "width"
+      # positionToPub.layout.dim[0].size = 3
+      # positionToPub.layout.dim[1].size = 3
+      # positionToPub.layout.dim[0].stride = 3*3
+      # positionToPub.layout.dim[1].stride = 3
+      # positionToPub.layout.data_offset = 0
+      # positionToPub.data = [xPosition,yPosition,zPosition]
+
+
       if "B" in state and "G" in state :
          state = state + "N"
       elif "B" in state and not "G" in state :
@@ -91,6 +132,9 @@ if __name__ == '__main__' :
       if len(state) == 4 :
          rospy.loginfo(state)
          pub.publish(state)
+         # pubX.publish(positionToPub)
+         # pubY.publish(yPosition)
+         # pubZ.publish(zPosition)
          rate.sleep()
       #print(state)
 
