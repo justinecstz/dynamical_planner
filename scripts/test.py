@@ -24,8 +24,8 @@ class PdCtrl:
       rospy.init_node('pd_controller')
       #self.current_joint_state = JointState()
       #self.current_ft_state = WrenchStamped()# record current state
-      #self.ctrl_freq = 200 #achieve the cmd in 0.1 sec
-      self.ctrl_freq = 2
+      self.ctrl_freq = 200 #achieve the cmd in 0.1 sec
+      #self.ctrl_freq = 1
 
       self.joint_names = ["iiwa_joint_1", "iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4", "iiwa_joint_5", "iiwa_joint_6", "iiwa_joint_7"]
 
@@ -55,7 +55,8 @@ class PdCtrl:
    def lin_ds(self,current_joint_position, target_state):
        #target_state = 1*np.array([-0.044405747733462106, 0.49814689840694254, 0.1520219301975148, -1.007911064798659, -0.07193516616802327, 1.4915826375219599, -1.568347410379195])
        #A = 0.9 * np.eye(7,7)
-       k = 0.001
+       #k = 0.001
+       k = 0.1
        A = np.array([[-k, 0, 0, 0, 0, 0, 0],
                      [0, -k, 0, 0, 0, 0, 0],
                      [0, 0, -k, 0, 0, 0, 0],
@@ -66,7 +67,11 @@ class PdCtrl:
        #target_state = np.array([-0.21402423525715478, 0.7634471979740207, -0.12009793253495818, -1.474234093773235, 0.09019634454611133, 0.8628468760288349, -1.8119070076103259])
        B = current_joint_position - target_state
        B = np.transpose(B)
-       next_joint_state = np.matmul(A, B) + target_state
+       #next_joint_state = np.matmul(A, B) + target_state
+       #speed = np.matmul(A, B)
+       #next_joint_state = current_joint_position + 100*speed #100 = un pas de temps ? 
+       next_joint_state = current_joint_position + np.matmul(A, B)
+       #next_joint_state = np.matmul(A, B)
        return next_joint_state
 
    def do_action(self,action) :

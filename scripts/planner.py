@@ -5,6 +5,7 @@ import math
 import tf
 from std_msgs.msg import String
 from std_msgs.msg import Float64MultiArray
+from sensor_msgs.msg import JointState
 from rospy.numpy_msg import numpy_msg
 import numpy as np
 #from threading import lock
@@ -14,7 +15,8 @@ markovMap = [[0, "GNBN", 0, 11, 2, 6], [1, "GBNN", 1, 6, 0, 10], [2, "BGNN", 0, 
 [6, "GNNB", 4, 1, 5, 0], [7, "NGNB", 3, 2, 5, 4], [8, "NNGB", 3, 3, 4, 5],
 [9, "BNNG", 4, 2, 5, 3], [10, "NBNG", 3, 1, 5, 5], [11, "NNBG", 3, 0, 4, 4]]
 #pour l'instant, la demo est pre-enregistree
-demos = [["NGBN", "NNBG", "GNBN", "GNNB", "GBNN"], ["NBGN", "NBNG", "GBNN"], ["BGNN", "BNNG", "BNGN", "NNGB", "NBGN", "NBNG", "GBNN"]]
+#demos = [["NGBN", "NNBG", "GNBN", "GNNB", "GBNN"], ["NBGN", "NBNG", "GBNN"], ["BGNN", "BNNG", "BNGN", "NNGB", "NBGN", "NBNG", "GBNN"]]
+demos = [["GBNN","GNNB","GNBN", "NNBG", "NGBN", "NGNB", "BGNN"],["GBNN","NBNG","NBGN","NNGB", "BNGN","BNNG","BGNN"]]
 goal = demos[0][-1]
 markovResults = []
 oldAction = 10
@@ -33,7 +35,7 @@ place3 = [jointPositionsP3, jointPositionsHome]
 
 class PdCtrl:
    def __init__(self):
-      self.ctrl_freq = 2
+      self.ctrl_freq = 200
       self.joint_names = ["iiwa_joint_1", "iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4", "iiwa_joint_5", "iiwa_joint_6", "iiwa_joint_7"]
       self.joint_cmd_pub =  rospy.Publisher('/iiwa/PositionController/command', numpy_msg(Float64MultiArray),queue_size=10)
 
@@ -44,23 +46,26 @@ class PdCtrl:
        self.joint_cmd_pub.publish(next_joint_state)
 
    def lin_ds(self,current_joint_position, target_state):
-       k = 0.001
-       A = np.array([[-k, 0, 0, 0, 0, 0, 0],
-                     [0, -k, 0, 0, 0, 0, 0],
-                     [0, 0, -k, 0, 0, 0, 0],
-                     [0, 0, 0, -k, 0, 0, 0],
-                     [0, 0, 0, 0, -k, 0, 0],
-                     [0, 0, 0, 0, 0, -k, 0],
-                     [0, 0, 0, 0, 0, 0, -k]])
+       k = 0.8
+       A = np.array([[k, 0, 0, 0, 0, 0, 0],
+                     [0, k, 0, 0, 0, 0, 0],
+                     [0, 0, k, 0, 0, 0, 0],
+                     [0, 0, 0, k, 0, 0, 0],
+                     [0, 0, 0, 0, k, 0, 0],
+                     [0, 0, 0, 0, 0, k, 0],
+                     [0, 0, 0, 0, 0, 0, k]])
       
        B = current_joint_position - target_state
        B = np.transpose(B)
+       #next_joint_state = np.matmul(A, B) + current_joint_position
        next_joint_state = np.matmul(A, B) + target_state
        return next_joint_state
 
    def do_action(self,action) :
         rtol = 1e-4
         atol = 1e-4
+        time = rospy.Time.now()
+        r = rospy.Rate(controller.ctrl_freq)
         joint_states_msg = rospy.wait_for_message('iiwa/joint_states', numpy_msg(JointState))
         current_position = joint_states_msg.position
         if action == 0 :
@@ -239,8 +244,8 @@ def handler_state_msgs(data) :
    if state != goal :
       plannerDuo = planner(markovResults,state)
       optAction = plannerDuo[0]
-      time = rospy.Time.now()
-      r = rospy.Rate(controller.ctrl_freq)
+      # time = rospy.Time.now()
+      # r = rospy.Rate(controller.ctrl_freq)
       # pub.publish(optAction)
       # rospy.Subscriber('xPositions', Float32MultiArray, returnX)
       #rospy.Subscriber('yPositions', String, returnY)
@@ -314,7 +319,9 @@ def handler_state_msgs(data) :
             # r.sleep()
          
    else:
-      print("Goal reached")
+      if oldAction != 10 :
+         print("Goal reached")
+         oldAction = 10
 
 def planner(markovResults, initState) :
 
