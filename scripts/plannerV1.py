@@ -20,9 +20,96 @@ demos = [["GBNN","GNNB","GNBN", "NNBG", "NGBN", "NGNB", "BGNN"],["GBNN","NBNG","
 goal = demos[0][-1]
 markovResults = []
 oldAction = 10
-problem = 0
-terminated = 0
-pbOnPos = 0
+
+jointPositionsP1 = 1*np.array([-0.044405747733462106, 1.19814689840694254, 0.1520219301975148, -1.607911064798659, -0.07193516616802327, 0.3915826375219599, -1.568347410379195])
+jointPositionsP2 = 1*np.array([0.644405747733462106, 1.15814689840694254, 0.1520219301975148, -1.607911064798659, -0.07193516616802327, 0.3915826375219599, -1.568347410379195]) 
+jointPositionsP3 = 1*np.array([1.344405747733462106, 1.19814689840694254, 0.1520219301975148, -1.607911064798659, -0.07193516616802327, 0.3915826375219599, -1.568347410379195])
+jointPositionsHome = 1*np.array([0.644405747733462106, 0.69814689840694254, 0.1520219301975148, -1.607911064798659, -0.07193516616802327, 0.7915826375219599, -1.568347410379195])
+
+pick1 = [jointPositionsP1, jointPositionsHome]
+pick2 = [jointPositionsP2, jointPositionsHome]
+pick3 = [jointPositionsP3, jointPositionsHome]
+place1 = [jointPositionsP1, jointPositionsHome]
+place2 = [jointPositionsP2, jointPositionsHome]
+place3 = [jointPositionsP3, jointPositionsHome]
+
+class PdCtrl:
+   def __init__(self):
+      self.ctrl_freq = 200
+      self.joint_names = ["iiwa_joint_1", "iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4", "iiwa_joint_5", "iiwa_joint_6", "iiwa_joint_7"]
+      self.joint_cmd_pub =  rospy.Publisher('/iiwa/PositionController/command', numpy_msg(Float64MultiArray),queue_size=10)
+
+   def send_cmd(self,command,time_stamp): #command = Float64MultiArray
+       next_joint_state = Float64MultiArray()
+
+       next_joint_state.data = command 
+       self.joint_cmd_pub.publish(next_joint_state)
+
+   def lin_ds(self,current_joint_position, target_state):
+       k = 0.8
+       A = np.array([[k, 0, 0, 0, 0, 0, 0],
+                     [0, k, 0, 0, 0, 0, 0],
+                     [0, 0, k, 0, 0, 0, 0],
+                     [0, 0, 0, k, 0, 0, 0],
+                     [0, 0, 0, 0, k, 0, 0],
+                     [0, 0, 0, 0, 0, k, 0],
+                     [0, 0, 0, 0, 0, 0, k]])
+      
+       B = current_joint_position - target_state
+       B = np.transpose(B)
+       #next_joint_state = np.matmul(A, B) + current_joint_position
+       next_joint_state = np.matmul(A, B) + target_state
+       return next_joint_state
+
+   def do_action(self,action) :
+        rtol = 1e-4
+        atol = 1e-4
+        time = rospy.Time.now()
+        r = rospy.Rate(controller.ctrl_freq)
+        joint_states_msg = rospy.wait_for_message('iiwa/joint_states', numpy_msg(JointState))
+        current_position = joint_states_msg.position
+        if action == 0 :
+            desired_joint_state_1 = pick1[0]
+            desired_joint_state_2 = pick1[1]
+
+        elif action == 1 :
+            desired_joint_state_1 = pick2[0]
+            desired_joint_state_2 = pick2[1]
+
+        elif action == 2 :
+            desired_joint_state_1 = pick3[0]
+            desired_joint_state_2 = pick3[1]
+
+        elif action == 3 :
+            desired_joint_state_1 = place1[0]
+            desired_joint_state_2 = place1[1]
+
+        elif action == 4 :
+            desired_joint_state_1 = place2[0]
+            desired_joint_state_2 = place2[1]
+
+        elif action == 5 :
+            desired_joint_state_1 = place3[0]
+            desired_joint_state_2 = place3[1]        
+
+        while not np.allclose(desired_joint_state_1,current_position, rtol, atol) :
+            # print(desired_joint_state)
+            # print(current_position)
+            next_joint_state = controller.lin_ds(current_position, desired_joint_state_1)
+            controller.send_cmd(next_joint_state,time)
+            r.sleep()
+            joint_states_msg = rospy.wait_for_message('iiwa/joint_states', numpy_msg(JointState))
+            current_position = joint_states_msg.position
+
+        while not np.allclose(desired_joint_state_2,current_position, rtol, atol) :
+            # print(desired_joint_state)
+            # print(current_position)
+            next_joint_state = controller.lin_ds(current_position, desired_joint_state_2)
+            controller.send_cmd(next_joint_state,time)
+            r.sleep()
+            joint_states_msg = rospy.wait_for_message('iiwa/joint_states', numpy_msg(JointState))
+            current_position = joint_states_msg.position
+
 
 def reinforcementLearning(demos) :
 #definition of probability matrices for the 12 states and 6 actions
@@ -152,133 +239,89 @@ def handler_state_msgs(data) :
    #rospy.loginfo(data)
    #print(data.data)
    global oldAction
-   global precondition
-   global problem
-   global currentTarget
-   global oldCurrentTarget
-   global terminated
-   global pbOnPos 
-
-   isInMarkovMap = 0
 
    state = data.data
+   if state != goal :
+      plannerDuo = planner(markovResults,state)
+      optAction = plannerDuo[0]
+      # time = rospy.Time.now()
+      # r = rospy.Rate(controller.ctrl_freq)
+      # pub.publish(optAction)
+      # rospy.Subscriber('xPositions', Float32MultiArray, returnX)
+      #rospy.Subscriber('yPositions', String, returnY)
+      #rospy.Subscriber('zPositions', String, returnZ)
 
-   #search if state is in Markov Map
-   for k in np.arange(len(markovMap)) :
-      if state in markovMap[k] :
-         isInMarkovMap = 1
-         precondition = state
-         break
-
-   if isInMarkovMap == 1:
-      problem = 0  
-      pbOnPos = 0    
-
-      if state != goal :
-         plannerDuo = planner(markovResults,state)
-         optAction = plannerDuo[0]
-
-         if optAction == 0 : 
+      if optAction == 0 : # pick(1)
+         if oldAction != 0 :
             print("pick(1)")
-            currentTarget = "pick1"
-            if oldAction != 0 :
-               oldAction = 0
-
-         elif optAction == 1 : 
+            oldAction = 0
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP1
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+      elif optAction == 1 : # pick(2)
+         if oldAction != 1 :
             print("pick(2)")
-            currentTarget = "pick2"
-            if oldAction != 1 :
-               oldAction = 1
-    
-         elif optAction == 2 :
+            oldAction = 1
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP2
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+      elif optAction == 2 : # pick(3)
+         if oldAction != 2 :
             print("pick(3)")
-            currentTarget = "pick3"
-            if oldAction != 2 :
-               oldAction = 2
-      
-         elif optAction == 3 : 
+            oldAction = 2
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP3
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+      elif optAction == 3 : # place(1)
+         if oldAction != 3 :
             print("place(1)")
-            currentTarget = "place1"
-            if oldAction != 3 :
-               oldAction = 3
-       
-         elif optAction == 4 : 
+            oldAction = 3
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP1
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+      elif optAction == 4 : # place(2)
+         if oldAction != 4 :
             print("place(2)")
-            currentTarget = "place2"
-            if oldAction != 4 :
-               oldAction = 4
-        
-         elif optAction == 5 : 
+            oldAction = 4
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP2
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+      elif optAction == 5 : # place(3)
+         if oldAction != 5 :
             print("place(3)")
-            currentTarget = "place3"
-            if oldAction != 5 :
-               oldAction = 5
-            
-      else:
-         if oldAction != 10 :
-            currentTarget = "home"
-            print("Goal reached")
-            oldAction = 10
-
-   #if state is not in Markov Map, a problem happened
-   elif isInMarkovMap == 0 :
-      if problem == 0 :
-         problem = 1
-
-         #check what happened
-         for i in np.arange(len(state)) :
-            if state[i] != precondition[i] :
-               wrongLetterPos = i
-
-         if precondition[wrongLetterPos] == "N" :
-            print("A cube appeared in position {0}".format(wrongLetterPos+1))
-         else :
-            print("A cube was stolen in position {0}".format(wrongLetterPos+1))
-         # print(oldAction)
-         # print(currentTarget)
-         #action was pick
-         if oldAction == 0 or oldAction == 1 or oldAction == 2 :
-            #cube that robot wanted to pick has been stolen
-            if oldAction == wrongLetterPos :
-               print("The cube that shoud be picked has disappeared!")
-               print("Waiting...")
-               # controller.do_action(6) #action 6 = wait
-               currentTarget = "wait"
-               pbOnPos = 1
-            # else :
-            # #    print("hello")
-            #    controller.do_action(optAction)
-
-         #action was place
-         elif oldAction == 3 or oldAction == 4 or oldAction == 5 :
-            if oldAction == wrongLetterPos + 3 :
-               print("A cube appeared where the robot wants to place the cube!")
-               print("Waiting...")
-               # controller.do_action(6)
-               # currentTarget = "wait"
-               pbOnPos = 1
-            # else :
-            #    controller.do_action(optAction)
-      elif problem == 1 and terminated == 0 :   
-         # and pbOnPos == 0:
-         print("Action goes on...")
-
-      elif problem == 1 and terminated == 1 :
-         print("Waiting...")
-         # controller.do_action(6) 
-         currentTarget = "wait"
-
-   pub.publish(currentTarget)
-
-def action_state(data):
-   
-   global terminated
-   action_state = data.data
-
-   if action_state == "terminated":
-      terminated = 1
-   else :
-      terminated = 0
+            oldAction = 5
+            controller.do_action(optAction)
+            # next_joint_state = jointPositionsP3
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+            # next_joint_state = jointPositionsHome
+            # controller.send_cmd(next_joint_state,time)
+            # r.sleep()
+         
+   else:
+      if oldAction != 10 :
+         print("Goal reached")
+         oldAction = 10
 
 def planner(markovResults, initState) :
 
@@ -314,12 +357,8 @@ if __name__ == '__main__' :
 
    global markovResults
    markovResults = reinforcementLearning(demos)
-   currentTarget = "home"
-   pub = rospy.Publisher('currentTarget', String, queue_size = 10)
-   # controller = PdCtrl()
+   controller = PdCtrl()
    #inserer position de depart = home
    while not rospy.is_shutdown() :
       rospy.Subscriber('currentState', String, handler_state_msgs) #when a message is received, callback is invoked w/ message as 1st arg
-      rospy.Subscriber('actionState', String, action_state)
-      # controller.do_action(currentTarget)
       rate.sleep()

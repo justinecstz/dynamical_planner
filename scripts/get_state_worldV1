@@ -8,19 +8,16 @@ from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import MultiArrayDimension
 import numpy as np
 
-oldState = "" 
 
 if __name__ == '__main__' :
    rospy.init_node('getStateWolrd')
    listenerMarkers = tf.TransformListener(True, rospy.Duration(5)) #appel du constructeur
    listenerCubes = tf.TransformListener(True, rospy.Duration(5)) #appel du constructeur
    rospy.sleep(1.5) #laisser le temps a tf de s'initialiser
-   ids = [0, 1, 3] #trouver comment recuperer les ids des markers pour que le code puisse etre applique avec d'autres objets
-   human = 0
+   ids = [0, 1, 2, 3, 4, 5, 6, 7] #trouver comment recuperer les ids des markers pour que le code puisse etre applique avec d'autres objets
+  
    lettersId = ["N", "N", [], "N", [], [], "N", "G"] #pour markers 0,1,3,6,7
    rate = rospy.Rate(1.0) #2 Hz, donc publication deux fois par seconde
-
-   global oldState
 
    # listener.waitForTransform("marker/0","camera/1",rospy.Time.now(), rospy.Duration(0.01))
    # transform = listener.lookupTransform("marker/0","camera/1",rospy.Time(0))
@@ -95,15 +92,10 @@ if __name__ == '__main__' :
       x = np.argsort(x)
       #x = x[::-1]
       #totalMarkers = len(visibleMarkers)
-
       totalItems = len(visibleMarkers) + len(visibleCubes)
-
       i = 0
-      # #print(visibleMarkers)
-      # print(visibleMarkers)
-      # print(visibleItems)
-      # print(totalItems)
-      # print(visible)
+      print(visible)
+
       for k in np.arange(totalItems) :
          while xPosition[x[k]] != visible[i][1] :
             i = i + 1
@@ -114,48 +106,58 @@ if __name__ == '__main__' :
          i = 0 
 
       pub = rospy.Publisher('currentState', String, queue_size = 10)
-      if listenerMarkers.canTransform("camera/1", "marker/7", rospy.Time.now() - rospy.Duration(1.0)) :
-         human = 1
-      else :
-         human = 0
-         
-      # print(state)
-      if "B" in state and "G" in state:
-         stateFull = state + "N"
-      elif "B" in state and not "G" in state:
-         if human == 1 and oldState[-1] == "G":
-            stateFull = state + "G"
-         elif human == 1 and oldState[-1] == "N":
-            stateFull = state + "N"
-         elif human == 0:
-            stateFull = state + "G"
-      elif "G" in state and not "B" in state:
-         if human == 1 and oldState[-1] == "B":
-            stateFull = state + "B"
-         elif human == 1 and oldState[-1] == "N":
-            stateFull = state + "N"
-         elif human == 0 :
-            stateFull = state + "B"
-      elif not "B" in state and not "G" in state:
-         if human == 1 :
-            for i in np.arange(len(oldState)):
-               if oldState[i] != "N":
-                  stateFull = state + oldState[i]     
+      # pubX = rospy.Publisher('xPositions', Float32MultiArray, queue_size = 10)
+      # pubY = rospy.Publisher('yPositions', Float32MultiArray, queue_size = 10)
+      # pubZ = rospy.Publisher('zPositions', Float32MultiArray, queue_size = 10)
 
-      oldState = stateFull 
-      # print(state)
+      # positionToPub = Float32MultiArray()
+      # positionToPub.layout.dim.append(MultiArrayDimension())
+      # positionToPub.layout.dim.append(MultiArrayDimension())
+      # positionToPub.layout.dim[0].label = "height"
+      # positionToPub.layout.dim[1].label = "width"
+      # positionToPub.layout.dim[0].size = 3
+      # positionToPub.layout.dim[1].size = 3
+      # positionToPub.layout.dim[0].stride = 3*3
+      # positionToPub.layout.dim[1].stride = 3
+      # positionToPub.layout.data_offset = 0
+      # positionToPub.data = [xPosition,yPosition,zPosition]
+
+
+      if "B" in state and "G" in state :
+         state = state + "N"
+      elif "B" in state and not "G" in state :
+         state = state + "G"
+      elif "G" in state and not "B" in state :
+         state = state + "B"
+      if len(state) == 4 :
+         rospy.loginfo(state)
+         pub.publish(state)
+         # pubX.publish(positionToPub)
+         # pubY.publish(yPosition)
+         # pubZ.publish(zPosition)
+         rate.sleep()
+      #print(state)
+
+      #while i < totalMarkers : #and not rospy.is_shutdown() :
+      # while i < totalItems :
+      #    #markersLeftToRight.append(visibleMarkers[x[i]])   #left to right relatif, attention a la direction des axes !
+
+      #    index.append(i)
+      #    state = state + str(lettersId[markersLeftToRight[i]])
+      #    i = i + 1
+      #    #print(markersLeftToRight)
+      #    #print(markersLeftToRight)
+      #    #publisher
+      #    pub = rospy.Publisher('currentState', String, queue_size = 10)
+      #    #rate = rospy.Rate(10) #10 Hz
+      # #ajout de la 4e lettre = main du robot
       # if "B" in state and "G" in state :
       #    state = state + "N"
       # elif "B" in state and not "G" in state :
       #    state = state + "G"
       # elif "G" in state and not "B" in state :
       #    state = state + "B"
-      if len(stateFull) == 4 :
-         rospy.loginfo(stateFull)
-         pub.publish(stateFull)
-         rate.sleep()
-      #print(state)
-
-
-
-   
+      # if len(state) == 4 :
+      #    rospy.loginfo(state)
+      #    pub.publish(state)
+#    rate.sleep()
