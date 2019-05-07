@@ -84,20 +84,18 @@ if __name__ == '__main__' :
       for k in length :
          visible.append([visibleItems[k],xPosition[k],yPosition[k],zPosition[k]])
 
-      #print(visible)
+      # x = np.array(xPosition)
+      # x = np.argsort(x)
+      y = np.array(yPosition)
+      y = np.argsort(y)
 
-      x = np.array(xPosition)
-      #print(visibleMarkers)
-      #print(x) 
-      x = np.argsort(x)
-      #x = x[::-1]
-      #totalMarkers = len(visibleMarkers)
       totalItems = len(visibleMarkers) + len(visibleCubes)
       i = 0
-      print(visible)
+      # print(visible)
 
       for k in np.arange(totalItems) :
-         while xPosition[x[k]] != visible[i][1] :
+         # while xPosition[x[k]] != visible[i][1] :
+         while yPosition[y[k]] != visible[i][2] :
             i = i + 1
          if visible[i][0] != "G" and visible[i][0] != "B" :
             state = state + "N"

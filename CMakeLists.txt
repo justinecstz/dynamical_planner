@@ -10,6 +10,7 @@ project(dynamical_planner)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
+  robotiq_s_model_control
 )
 
 ## System dependencies are found with CMake's conventions
@@ -104,8 +105,8 @@ catkin_python_setup()
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES dynamical_planner
-#  CATKIN_DEPENDS rospy std_msgs
-#  DEPENDS system_lib
+  CATKIN_DEPENDS rospy std_msgs robotiq_s_model_control
+  DEPENDS system_lib
 )
 
 ###########

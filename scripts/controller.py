@@ -24,7 +24,7 @@ class PdCtrl:
 
 
       #self.next_joint_state.joint_names = joint_names
-      self.train_data_pub = rospy.Publisher('/train_data', numpy_msg(TrainningData),queue_size=10)
+      # self.train_data_pub = rospy.Publisher('/train_data', numpy_msg(TrainningData),queue_size=10)
       joint_state_sub = message_filters.Subscriber('/iiwa/joint_states', numpy_msg(JointState))
       ft_state_sub = message_filters.Subscriber('/ft_sensor/netft_data',numpy_msg(WrenchStamped))
 
@@ -48,7 +48,7 @@ class PdCtrl:
        self.joint_cmd_pub.publish(next_joint_state)
 
    def lin_ds(self,current_joint_position):
-       target_state = 1*np.array([-0.044405747733462106, 0.49814689840694254, 0.1520219301975148, -1.007911064798659, -0.07193516616802327, 1.4915826375219599, -1.568347410379195])
+       target_state = 1*np.array([0.644405747733462106, 0.69814689840694254, 0.1520219301975148, -1.607911064798659, -0.07193516616802327, 0.7915826375219599, -1.568347410379195])
        #A = 0.9 * np.eye(7,7)
        A = np.array([[.92, 0, 0, 0, 0, 0, 0],
                     [0, 0.92, 0, 0, 0, 0, 0],

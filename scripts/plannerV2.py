@@ -8,7 +8,7 @@ from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
 from rospy.numpy_msg import numpy_msg
 import numpy as np
-# import SModelSimpleController
+#from threading import lock
 
 markovMap = [[0, "GNBN", 0, 11, 2, 6], [1, "GBNN", 1, 6, 0, 10], [2, "BGNN", 0, 7, 1, 9], 
 [3, "BNGN", 0, 8, 2, 9], [4, "NGBN", 1, 11, 2, 7], [5, "NBGN", 1, 8, 2, 10],
@@ -347,13 +347,12 @@ def planner(markovResults, initState) :
 if __name__ == '__main__' :
    rospy.init_node('planner')
    rate = rospy.Rate(1.0)
+   # controller.times_sync.registerCallback(controller.state_subscriber)
 
    global markovResults
    markovResults = reinforcementLearning(demos)
    currentTarget = "home"
    pub = rospy.Publisher('currentTarget', String, queue_size = 10)
-   pub.publish(currentTarget)
-
    # controller = PdCtrl()
    #inserer position de depart = home
    while not rospy.is_shutdown() :
