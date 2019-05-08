@@ -48,6 +48,7 @@ q_old = jointPositionsHome
 
 positionReached = 0
 actionPhase =  1
+gripperStatus = 0
 
 class PdCtrl:
    def __init__(self):

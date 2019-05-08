@@ -24,6 +24,12 @@ jointPositionsHome = 1*np.array([-0.2561309292711379, 0.48341762688080325, -0.07
 positionReached = 0
 q_old = jointPositionsHome
 gripperCommand = 'o'
+count = 0
+gripperStatus = 0
+
+def gripper_status(data) :
+  global gripperStatus
+  gripperStatus = data.gPOA
 
 class PdCtrl:
    def __init__(self):
@@ -50,6 +56,7 @@ class PdCtrl:
    #     self.current_ft_state = ft_state
 
        #self.lin_ds()
+
    def send_cmd(self,command,time_stamp): #command = Float64MultiArray
        next_joint_state = Float64MultiArray()
 
@@ -65,12 +72,13 @@ class PdCtrl:
        # k = 0.9
        global q_star
        global q_send
+       global q_speed
        global q_old
       
-       alpha = 0.9
-       kp = 0.9
-       kd = 0.05 #0.065
-       time = 0.100 #???
+       alpha = 0.8
+       kp = 50 #50
+       kd = 0.04 #0.058
+       time = 0.02 #0.02
 
        # A = np.array([[-k, 0, 0, 0, 0, 0, 0],
        #               [0, -k, 0, 0, 0, 0, 0],
@@ -100,9 +108,13 @@ class PdCtrl:
        delta_q = current_joint_position - q_old
        q_old = current_joint_position
        q_star = (1-alpha)*q_star + alpha*target_state
-       q_dot = -kp*(current_joint_position - q_star)
-       q_send = q_send + q_dot*time + kd*(delta_q/time)
+       # q_dot = -kp*(current_joint_position - q_star)
+       # q_send = q_send + q_dot*time - kd*(delta_q/time)
 
+       q_acc = kp*(q_star - current_joint_position)-2*np.sqrt(kp)*(delta_q/time)
+       q_speed = q_acc*time + q_speed
+       q_send = q_acc*time**2 + time*q_speed + q_send 
+       # print(q_send)
        # print(positionReached)
        
         # #target_state = np.array([-0.21402423525715478, 0.7634471979740207, -0.12009793253495818, -1.474234093773235, 0.09019634454611133, 0.8628468760288349, -1.8119070076103259])
@@ -168,9 +180,11 @@ class PdCtrl:
 
         global q_star
         global q_send
+        global q_speed
         global positionReached
         global currentAction
         global actionPhase
+        global count 
 
         rtol = 1e-2
         atol = 1e-2
@@ -180,6 +194,7 @@ class PdCtrl:
         current_position = joint_states_msg.position
         q_star = current_position
         q_send = current_position
+        q_speed = current_position*0.005
 
         controller.lin_ds(current_position, target)
         controller.send_cmd(q_send,time)
@@ -191,14 +206,18 @@ class PdCtrl:
               (currentTarget==jointPositionsP2).all() or (currentTarget==jointPositionsP3).all()) :
           
           positionReached = 1
-          # pubGripper.publish(gripperCommand)
-          # while gripper_msg.gPOA < 225 :
-          #     gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
-            
+          # command = outputMsg.SModel_robot_output()
+          # command.rPRA = 255
+          # pubGripper.publish(command)
+          # gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
+          # while gripper_msg.gPOA < 200 :
+          #   gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
+          #   print(gripper_msg.gPOA)
         elif positionReached == 1 and np.allclose(jointPositionsHome[2:7],current_position[2:7], rtol, atol)  :
         # and (currentAction == "pick1" or \
         #       currentAction == "pick2" or currentAction == "pick3" or currentAction == "place1" or currentAction == "place2" or currentAction == "place3") :
           positionReached = 0
+          count = 1
           # actionPhase = 1
 
         r.sleep()
@@ -207,9 +226,21 @@ class PdCtrl:
 if __name__ == '__main__':
     controller = PdCtrl()
     #controller.times_sync.registerCallback(controller.state_subscriber)
-    rate = rospy.Rate(20)
-    # pubGripper = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output);
-    # pubGripper.publish('a') #activate gripper
+    rate = rospy.Rate(200)
+    # for i in np.arange(10) :
+    # pubGripper = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output, queue_size = 1);
+
+    # command = outputMsg.SModel_robot_output()
+    # command.rACT = 1
+    # command.rGTO = 1
+    # command.rSPA = 255
+    # command.rFRA = 150
+    
+    # rospy.sleep(2)
+    # pubGripper.publish(command) #activate gripper
+    # rospy.sleep(5)
+    
+
     while not rospy.is_shutdown():
         # controller.train_data_msg.header.stamp = rospy.Time.now()
         # controller.train_data_msg.joint_state = controller.current_joint_state
@@ -242,17 +273,18 @@ if __name__ == '__main__':
 
         # action = go to position i and then go home
 
-        currentAction= "pick1"
+        if count == 0:
+          currentAction= "pick1"
 
-        if currentAction == "pick1":
-          if positionReached == 0 :
-            currentTarget = jointPositionsP1
-            gripperCommand = 'c'
-          else:
-            currentTarget = jointPositionsHome
+          if currentAction == "pick1":
+            if positionReached == 0 :
+              currentTarget = jointPositionsP1
+              gripperCommand = 'c'
+            else:
+              currentTarget = jointPositionsHome
 
-        controller.do_action(currentTarget)
-        rate.sleep()
+          controller.do_action(currentTarget)
+          rate.sleep()
 
         # action = "place(1)"
         # controller.do_action(action)
