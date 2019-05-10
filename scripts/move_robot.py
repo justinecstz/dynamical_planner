@@ -55,6 +55,7 @@ class PdCtrl:
       self.ctrl_freq = 200
       self.joint_names = ["iiwa_joint_1", "iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4", "iiwa_joint_5", "iiwa_joint_6", "iiwa_joint_7"]
       self.joint_cmd_pub =  rospy.Publisher('/iiwa/PositionController/command', numpy_msg(Float64MultiArray),queue_size=10)
+      # self.pubGripper = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output, queue_size = 1);
 
    def send_cmd(self,command,time_stamp): #command = Float64MultiArray
        next_joint_state = Float64MultiArray()
@@ -130,14 +131,14 @@ class PdCtrl:
 	    		positionReached = 1
 	    		actionState = "terminated"
 	    		pub.publish(actionState)
-	    		pubGripper.publish(gripperCommand)
-	    		gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
-	    		if gripperCommand == 'c' :
-	    			while gripper_msg.gPOA < 225 :
-	    				gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
-	    		elif gripperCommand == 'o' :
-	    			while gripper_msg.gPOA > 10:
-	    				gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
+	    		# self.pubGripper.publish(gripperCommand)
+	    		# gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
+	    		# if gripperCommand == 'c' :
+	    		# 	while gripper_msg.gPOA < 225 :
+	    		# 		gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
+	    		# elif gripperCommand == 'o' :
+	    		# 	while gripper_msg.gPOA > 10:
+	    		# 		gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
 
 	    	elif positionReached == 1 and np.allclose(jointPositionsHome[2:7],current_position[2:7], rtol, atol)  :
 	    	# and (currentAction == "pick1" or \
@@ -166,42 +167,42 @@ def handler_action_msgs(data) :
 	if currentAction == "pick1":
 		if positionReached == 0 :
 			currentTarget = jointPositionsP1
-			gripperCommand = 'c'
+			# gripperCommand = 'c'
 		else:
 			currentTarget = jointPositionsHome
 
 	elif currentAction == "pick2":
 		if positionReached == 0 :
 			currentTarget = jointPositionsP2
-			gripperCommand = 'c'
+			# gripperCommand = 'c'
 		else:
 			currentTarget = jointPositionsHome
 
 	elif currentAction == "pick3":
 		if positionReached == 0 :
 			currentTarget = jointPositionsP3
-			gripperCommand = 'c'
+			# gripperCommand = 'c'
 		else:
 			currentTarget = jointPositionsHome
 
 	elif currentAction == "place1":
 		if positionReached == 0 :
 			currentTarget = jointPositionsP1
-			gripperCommand = 'o'
+			# gripperCommand = 'o'
 		else:
 			currentTarget = jointPositionsHome
 
 	elif currentAction == "place2":
 		if positionReached == 0 :
 			currentTarget = jointPositionsP2
-			gripperCommand = 'o'
+			# gripperCommand = 'o'
 		else:
 			currentTarget = jointPositionsHome
 
 	elif currentAction == "place3":
 		if positionReached == 0 :
 			currentTarget = jointPositionsP3
-			gripperCommand = 'o'
+			# gripperCommand = 'o'
 		else:
 			currentTarget = jointPositionsHome
 
@@ -216,8 +217,12 @@ if __name__ == '__main__' :
    controller = PdCtrl()
    rate = rospy.Rate(40)
    pub = rospy.Publisher('actionState', String, queue_size = 10)
-   pubGripper = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output);
-   pubGripper.publish('a') #activate gripper
+
+   # grip_command.rACT = 1
+   # grip_command.rGTO = 1
+   # grip_command.rSPA = 255
+   # grip_command.rFRA = 150
+   # controller.pubGripper.publish(command) #activate gripper
 
    while not rospy.is_shutdown() :
       rospy.Subscriber('currentTarget', String, handler_action_msgs) #when a message is received, callback is invoked w/ message as 1st arg

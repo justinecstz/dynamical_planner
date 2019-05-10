@@ -48,6 +48,7 @@ class PdCtrl:
       #self.times_sync = message_filters.ApproximateTimeSynchronizer([joint_state_sub,ft_state_sub], 1000,slop=0.003)
       #self.lin_ds_out_pub =  rospy.Publisher('/lin_ds_out', numpy_msg(DsOutput),queue_size=10)
       self.joint_cmd_pub =  rospy.Publisher('/iiwa/PositionController/command', numpy_msg(Float64MultiArray),queue_size=10) #topic important
+      self.pubGripper = rospy.Publisher('/SModelRobotOutput', outputMsg.SModel_robot_output, queue_size = 1);
       # self.joint_cmd_result = rospy.Publisher('/lin_ds_cmd_result', numpy_msg(JointState),queue_size=10)
 
    # def state_subscriber(self,joint_state,ft_state):
@@ -208,7 +209,7 @@ class PdCtrl:
           positionReached = 1
           # command = outputMsg.SModel_robot_output()
           # command.rPRA = 255
-          # pubGripper.publish(command)
+          # self.pubGripper.publish(command)
           # gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
           # while gripper_msg.gPOA < 200 :
           #   gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
@@ -228,17 +229,17 @@ if __name__ == '__main__':
     #controller.times_sync.registerCallback(controller.state_subscriber)
     rate = rospy.Rate(200)
     # for i in np.arange(10) :
-    # pubGripper = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output, queue_size = 1);
+    # 
 
-    # command = outputMsg.SModel_robot_output()
-    # command.rACT = 1
-    # command.rGTO = 1
-    # command.rSPA = 255
-    # command.rFRA = 150
+    command = outputMsg.SModel_robot_output()
+    command.rACT = 1
+    command.rGTO = 1
+    command.rSPA = 255
+    command.rFRA = 150
     
-    # rospy.sleep(2)
-    # pubGripper.publish(command) #activate gripper
-    # rospy.sleep(5)
+    rospy.sleep(2)
+    # controller.pubGripper.publish(command) #activate gripper
+    rospy.sleep(5)
     
 
     while not rospy.is_shutdown():
@@ -279,7 +280,7 @@ if __name__ == '__main__':
           if currentAction == "pick1":
             if positionReached == 0 :
               currentTarget = jointPositionsP1
-              gripperCommand = 'c'
+              # gripperCommand = 'c'
             else:
               currentTarget = jointPositionsHome
 
