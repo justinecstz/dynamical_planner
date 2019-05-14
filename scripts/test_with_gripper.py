@@ -183,6 +183,8 @@ class PdCtrl:
             grip_command.rSPA = 255
             grip_command.rFRA = 150
             grip_command.rPRA = 255
+            print(len(graphs.commandHistoricJoint0))
+            print(graphs.commandHistoricJoint0f)
             # self.pubGripper.publish(command)
             # gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input)
             # while gripper_msg.gPOA < 200 :
