@@ -62,44 +62,6 @@ class plots(object):
     timeSim = time - self.timeStart
     self.timeVector.append(timeSim)
 
-    # if self.write_count == 0:
-    #   dataCmdJ = {}
-    #   dataCmdJ['commandJoints'] = []
-    #   dataCmdJ['commandJoints'].append({
-    #      'Joint0' : str(command[0]),
-    #      'Joint1' : str(command[1]),
-    #      'Joint2' : str(command[2]),
-    #      'Joint3' : str(command[3]),
-    #      'Joint4' : str(command[4]),
-    #      'Joint5' : str(command[5]),
-    #      'Joint6' : str(command[6])
-    #   })
-    #   with open('commandJoints.txt', 'w') as outfile:  
-    #     json.dump(dataCmdJ, outfile)
-
-    # else:
-    #   dataCmdJ = {}
-    #   dataCmdJ['commandJoints'] = []
-    #   self.read_data('commandJoints.txt','commandJoints',self.commandJoints)
-
-    #   for i in np.arange(7):
-    #     self.commandJoints[i].append(command[i])
-
-    #   for j in np.arange(len(self.commandJoints[0])):
-    #     dataCmdJ['commandJoints'].append({
-    #      'Joint0' : str(self.commandJoints[0][j]),
-    #      'Joint1' : str(self.commandJoints[1][j]),
-    #      'Joint2' : str(self.commandJoints[2][j]),
-    #      'Joint3' : str(self.commandJoints[3][j]),
-    #      'Joint4' : str(self.commandJoints[4][j]),
-    #      'Joint5' : str(self.commandJoints[5][j]),
-    #      'Joint6' : str(self.commandJoints[6][j])
-    #     })
-    #     with open('commandJoints.txt', 'w') as outfile:  
-    #       json.dump(dataCmdJ, outfile)
-
-
-
   def read_data(self,fileName,topic,dataList):
     with open(fileName) as json_file:  
       data = json.load(json_file)
@@ -110,8 +72,6 @@ class plots(object):
 
   def write_json(self,command,error,speed,time,endEffPos):
 
-    # print(type(command[0][0]))
-    # print(command[0])
     dataCmdJ = {}
     dataCmdJ['commandJoints'] = []
     dataCmdJ['commandJoints'].append({
@@ -433,12 +393,12 @@ if __name__ == '__main__':
     #     phase = 2
     # else:
 
-    currentAction= "pick1"
+    currentAction= "home"
     # currentAction= "home"
 
-    if currentAction == "pick1":
+    if currentAction == "pick2":
       if positionReached == 0 :
-        currentTarget = jointPositionsP1
+        currentTarget = jointPositionsP2
 
     if currentAction == "home":
       if positionReached == 0 :
