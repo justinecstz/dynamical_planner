@@ -4,9 +4,6 @@ import rospy
 import math
 import tf
 from std_msgs.msg import String
-from std_msgs.msg import Float64MultiArray
-from sensor_msgs.msg import JointState
-from rospy.numpy_msg import numpy_msg
 import numpy as np
 # import SModelSimpleController
 
@@ -350,14 +347,14 @@ if __name__ == '__main__' :
 
    global markovResults
    markovResults = reinforcementLearning(demos)
-   currentTarget = "home"
-   pub = rospy.Publisher('currentTarget', String, queue_size = 10)
-   pub.publish(currentTarget)
+   # currentTarget = "home"
+   # pub = rospy.Publisher('currentTarget', String, queue_size = 10)
+   # pub.publish(currentTarget)
 
    # controller = PdCtrl()
    #inserer position de depart = home
    while not rospy.is_shutdown() :
       rospy.Subscriber('handover', String, handover_func)
-      rospy.Subscriber('currentState', String, handler_state_msgs) #when a message is received, callback is invoked w/ message as 1st arg
-      rospy.Subscriber('actionState', String, action_state)
+      rospy.Subscriber('current_state', String, handler_state_msgs) #when a message is received, callback is invoked w/ message as 1st arg
+      rospy.Subscriber('action_state', String, action_state)
       rate.sleep()

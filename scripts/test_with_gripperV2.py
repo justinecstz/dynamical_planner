@@ -221,7 +221,7 @@ class PdCtrl(object):
       self.joint_names = ["iiwa_joint_1", "iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4", "iiwa_joint_5", "iiwa_joint_6", "iiwa_joint_7"]
       self.joint_cmd_pub =  rospy.Publisher('/iiwa/PositionController/command', numpy_msg(Float64MultiArray),queue_size=10) #topic important
       self.joint_state_sub = rospy.Subscriber('iiwa/joint_states', numpy_msg(JointState), self.get_joint_state)
-      self.pubGripper = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output, queue_size = 1);
+      # self.pubGripper = rospy.Publisher('SModelRobotOutput', outputMsg.SModel_robot_output, queue_size = 1);
       self.jointCurrentStates = jointPositionsHome 
 
    def get_joint_state(self,data):
@@ -245,12 +245,12 @@ class PdCtrl(object):
        kp = 50 #50
        kd = 0.04 
        time = 0.02 #0.02
-       K = 11 #10
+       K = 6 #10
 
        delta_q = current_joint_position - self.q_old
        self.q_old = current_joint_position
 
-       q_speed_max = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.01]
+       q_speed_max = [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.01]
 
        # q_star = (1-alpha)*q_star + alpha*target_state
 
@@ -264,8 +264,8 @@ class PdCtrl(object):
        q_dot = -K*error
 
        for i in np.arange(7):
-        if q_dot[i] > q_speed_max[i]:
-          q_dot[i] = q_speed_max[i]
+        if abs(q_dot[i]) > q_speed_max[i]:
+          q_dot[i] = np.sign(q_dot[i])*q_speed_max[i]
 
        self.q_send = q_dot*time + self.q_old
 
@@ -317,15 +317,17 @@ class PdCtrl(object):
             #   (currentTarget==jointPositionsP2).all() or (currentTarget==jointPositionsP3).all()) :
           
             positionReached = 1
+            print(positionReached)
+
             # grip_command = outputMsg.SModel_robot_output()
             # close gripper
-            grip_command.rACT = 1
-            grip_command.rGTO = 1
-            grip_command.rSPA = 255
-            grip_command.rFRA = 150
-            grip_command.rPRA = 255
+            # grip_command.rACT = 1
+            # grip_command.rGTO = 1
+            # grip_command.rSPA = 255
+            # grip_command.rFRA = 150
+            # grip_command.rPRA = 255
 
-            graphs.write_json(graphs.commandJoints,graphs.errorJoints,graphs.speedJoints,graphs.timeVector,graphs.endEffxyz)
+            # graphs.write_json(graphs.commandJoints,graphs.errorJoints,graphs.speedJoints,graphs.timeVector,graphs.endEffxyz)
             
             # graphs.plot_endeff()
             # graphs.plot_cmd_error()
@@ -393,7 +395,7 @@ if __name__ == '__main__':
     #     phase = 2
     # else:
 
-    currentAction= "home"
+    currentAction= "pick2"
     # currentAction= "home"
 
     if currentAction == "pick2":
