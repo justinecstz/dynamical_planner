@@ -8,7 +8,7 @@ import numpy as np
 
 class Action(object):
 	def __init__(self):
-		self.old_action = 10
+		self.old_action = "home"
 		self.precondition = ""
 		self.problem = 0
 		self.terminated = 0
@@ -16,8 +16,12 @@ class Action(object):
 		self.current_target = "home"
 		self.handover = 0
 		self.reached_handover = 0
+		self.priority = 0
 		rospy.Subscriber('action_state', String, self.action_state)
 		rospy.Subscriber('handover', String, self.handover_func)
+
+		self.pub_prio = rospy.Publisher('priority', String, queue_size = 10)
+		rospy.Subscriber('priority', String, self.manage_prio)
 
 
 	def action_state(self,data):
@@ -37,6 +41,16 @@ class Action(object):
 		  self.handover = 1
 		else :
 		  self.handover = 0
+
+	def manage_prio(self,data):
+
+		prio_state = data.data
+
+		if prio_state == "0":
+			self.priority = 0
+		else:
+			self.priority = 1
+
 
 
 

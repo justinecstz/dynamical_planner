@@ -58,6 +58,8 @@ def handler_state_msgs(data) :
         action.problem = 0  
         action.pb_on_pos = 0    
 
+        action.pub_prio.publish("0")
+
         if state != markov.goal :
            planner_duo = planner(markov.markov_results,state)
            opt_action = planner_duo[0]
@@ -108,7 +110,7 @@ def handler_state_msgs(data) :
      elif is_in_markov_map == 0 :
         if action.problem == 0 :
            action.problem = 1
-
+           action.pub_prio.publish("1")
            #check what happened
            for i in np.arange(len(state)) :
               if state[i] != action.precondition[i] :
@@ -173,6 +175,7 @@ if __name__ == '__main__' :
    rospy.Subscriber('current_state', String, handler_state_msgs)
    pub_target = rospy.Publisher('current_target', String, queue_size = 10)
    pub_target.publish(action.current_target)
+
    rate = rospy.Rate(1.0)
    # action.current_target = "home"
    # pub = rospy.Publisher('currentTarget', String, queue_size = 10)

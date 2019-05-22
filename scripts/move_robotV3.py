@@ -17,54 +17,64 @@ from dynamical_planner.action import Action
             
 def handler_action_msgs(data) :
 
-	# if action.terminated == 1 :
 	controller.current_action = data.data
+	# if controller.position_reached == 1 and action.priority == 0 :
+	# 	controller.current_action = action.old_action
+	# elif controller.position_reached == 0 :
+
 	# rospy.loginfo(data)
 	
 	if controller.current_action == "pick1":
 		if controller.position_reached == 0 :
 			controller.current_target = controller.joint_positions_p1
-			gripper.gripper_goal = 'c'
+			action.old_action = "pick1"
+			# gripper.gripper_goal = 'c'
 		else:
 			controller.current_target = controller.joint_positions_home
 
 	elif controller.current_action == "pick2":
 		if controller.position_reached == 0 :
 			controller.current_target = controller.joint_positions_p2
-			gripper.gripper_goal = 'c'
+			action.old_action = "pick2"
+			# gripper.gripper_goal = 'c'
 		else:
 			controller.current_target = controller.joint_positions_home
 
 	elif controller.current_action == "pick3":
 		if controller.position_reached == 0 :
 			controller.current_target = controller.joint_positions_p3
-			gripper.gripper_goal = 'c'
+			action.old_action = "pick3"
+			# gripper.gripper_goal = 'c'
 		else:
 			controller.current_target = controller.joint_positions_home
 
 	elif controller.current_action == "place1":
 		if controller.position_reached == 0 :
 			controller.current_target = controller.joint_positions_p1
-			gripper.gripper_goal = 'o'
+			action.old_action = "place1"
+			# gripper.gripper_goal = 'o'
 		else:
 			controller.current_target = controller.joint_positions_home
 
 	elif controller.current_action == "place2":
 		if controller.position_reached == 0 :
 			controller.current_target = controller.joint_positions_p2
-			gripper.gripper_goal = 'o'
+			action.old_action = "place2"
+			# gripper.gripper_goal = 'o'
 		else:
 			controller.current_target = controller.joint_positions_home
 
 	elif controller.current_action == "place3":
 		if controller.position_reached == 0 :
 			controller.current_target = controller.joint_positions_p3
-			gripper.gripper_goal = 'o'
+			action.old_action = "place3"
+			# gripper.gripper_goal = 'o'
 		else:
 			controller.current_target = controller.joint_positions_home
 
 	elif controller.current_action == "home" or controller.current_action == "wait":
 		controller.current_target = controller.joint_positions_home
+		action.old_action = "wait"
 
 	elif controller.current_action == "handover":
 		controller.current_target = controller.joint_position_handover

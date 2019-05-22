@@ -40,7 +40,7 @@ class PdCtrl:
 
 	def lin_ds(self,current_joint_position, target_state):
 		time = 0.02 #0.02
- 		K = 10 #10
+ 		K = 6 #10
 
 		delta_q = current_joint_position - self.q_old
 		self.q_old = current_joint_position
@@ -61,7 +61,7 @@ class PdCtrl:
 		rtol = 1e-4
 		atol = 1e-4
 		tol = 5e-3
-		# gripper = Gripper()
+
 		r = rospy.Rate(self.ctrl_freq)
 		
  		current_position = self.joint_current_states
@@ -85,15 +85,13 @@ class PdCtrl:
 			# print(self.position_reached)
 
 			if self.current_action == "pick1" or self.current_action == "pick2" or self.current_action == "pick3":
-			# if gripper.gripperGoal == "c" :
 				print("Closing gripper")
 				# self.pub_for_gripper.publish("c")
 					# gripper_msg = rospy.wait_for_message('SModelRobotInput', inputMsg.SModel_robot_input) #????
 
-			# elif gripper.gripperGoal == "o" :
 			elif self.current_action == "place1" or self.current_action == "place2" or self.current_action == "place3":
-					print("Opening gripper")
-					# self.pub_for_gripper.publish("o")
+				print("Opening gripper")
+				# self.pub_for_gripper.publish("o")
 	
 
 		elif np.amax(diff_home) < tol and (self.current_target==self.joint_positions_home).all() :

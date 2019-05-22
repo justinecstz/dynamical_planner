@@ -26,19 +26,19 @@ if __name__ == '__main__' :
       for k in length :
          visible.append([world.visible_items[k],world.x_position[k],world.y_position[k],world.z_position[k]])
 
-      # x = np.array(xPosition) 
-      # x = np.argsort(x)
+      x = np.array(world.x_position) 
+      x = np.argsort(x)
 
-      y = np.array(world.y_position)
-      y = np.argsort(y)
+      # y = np.array(world.y_position)
+      # y = np.argsort(y)
 
       total_items = len(world.visible_markers) + len(world.visible_cubes)
 
       count = 0
 
       for k in np.arange(total_items) :
-         # while xPosition[x[k]] != visible[i][1] :
-         while world.y_position[y[k]] != visible[count][2] :
+         while world.x_position[x[k]] != visible[count][1] :
+         # while world.y_position[y[k]] != visible[count][2] :
             count = count + 1
          if visible[count][0] != "G" and visible[count][0] != "B" :
             world.state = world.state + "N"
@@ -59,9 +59,9 @@ if __name__ == '__main__' :
       if "B" in world.state and "G" in world.state:
          world.state_full = world.state + "N"
       elif "B" in world.state and not "G" in world.state:
-         if world.human == 1 and old_state[-1] == "G":
+         if world.human == 1 and world.old_state[-1] == "G":
             world.state_full = world.state + "G"
-         elif world.human == 1 and old_state[-1] == "N":
+         elif world.human == 1 and world.old_state[-1] == "N":
             world.state_full = world.state + "N"
          elif world.human == 0:
             world.state_full = world.state + "G"

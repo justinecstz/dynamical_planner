@@ -395,8 +395,8 @@ if __name__ == '__main__':
     #     phase = 2
     # else:
 
-    currentAction= "pick2"
-    # currentAction= "home"
+    # currentAction= "pick2"
+    currentAction= "home"
 
     if currentAction == "pick2":
       if positionReached == 0 :
