@@ -51,10 +51,11 @@ if __name__ == '__main__' :
       else :
          world.human = 0
 
-      # if listenerMarkers.canTransform("camera/1", "marker/6", rospy.Time.now() - rospy.Duration(1.0)) :
-      #    pubHandover.publish("handover")
-      # else :
-      #    pubHandover.publish("no handover")
+      if world.listener_markers.canTransform("camera/1", "marker/6", rospy.Time.now() - rospy.Duration(1.0)) :
+         pubHandover.publish("handover")
+         # print("hello")
+      else :
+         pubHandover.publish("no handover")
 
       if "B" in world.state and "G" in world.state:
          world.state_full = world.state + "N"
@@ -84,6 +85,7 @@ if __name__ == '__main__' :
          rospy.loginfo(world.state_full)
          pub.publish(world.state_full)
          rate.sleep()
+
    
 
 

@@ -6,12 +6,15 @@ import tf
 from std_msgs.msg import String
 import numpy as np
 
+#V2
+
 class Action(object):
 	def __init__(self):
-		self.old_action = "home"
+		self.old_action = 10
+		self.old_target = "home"
 		self.precondition = ""
 		self.problem = 0
-		self.terminated = 0
+		self.terminated = 1
 		self.pb_on_pos = 0
 		self.current_target = "home"
 		self.handover = 0
@@ -50,7 +53,3 @@ class Action(object):
 			self.priority = 0
 		else:
 			self.priority = 1
-
-
-
-

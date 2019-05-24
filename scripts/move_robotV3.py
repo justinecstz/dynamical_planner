@@ -72,12 +72,20 @@ def handler_action_msgs(data) :
 		else:
 			controller.current_target = controller.joint_positions_home
 
-	elif controller.current_action == "home" or controller.current_action == "wait":
+	# elif controller.current_action == "home" or controller.current_action == "wait":
+	# 	controller.current_target = controller.joint_positions_home
+	# 	action.old_action = "wait"
+	elif controller.current_action == "home":
+		controller.current_target = controller.joint_positions_home
+		action.old_action = "home"
+
+	elif controller.current_action == "wait":
 		controller.current_target = controller.joint_positions_home
 		action.old_action = "wait"
 
+
 	elif controller.current_action == "handover":
-		controller.current_target = controller.joint_position_handover
+		controller.current_target = controller.joint_positions_handover
 
 if __name__ == '__main__' :
 	rospy.init_node('moveRobot')
