@@ -12,20 +12,17 @@ class Action(object):
 	def __init__(self):
 		self.old_action = 10
 		self.old_target = "home"
-		self.precondition = ""
+		self.precondition = "NNNN"
+		self.precondition_pb = "NNNN"
+		self.postcondition = "NNNN"
 		self.problem = 0
 		self.terminated = 1
 		self.pb_on_pos = 0
 		self.current_target = "home"
 		self.handover = 0
-		self.reached_handover = 0
 		self.priority = 0
 		rospy.Subscriber('action_state', String, self.action_state)
 		rospy.Subscriber('handover', String, self.handover_func)
-
-		self.pub_prio = rospy.Publisher('priority', String, queue_size = 10)
-		rospy.Subscriber('priority', String, self.manage_prio)
-
 
 	def action_state(self,data):
 

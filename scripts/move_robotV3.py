@@ -8,8 +8,8 @@ from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
 from rospy.numpy_msg import numpy_msg
 import numpy as np
-from robotiq_s_model_control.msg import _SModel_robot_input  as inputMsg
-from robotiq_s_model_control.msg import _SModel_robot_output  as outputMsg
+# from robotiq_s_model_control.msg import _SModel_robot_input  as inputMsg
+# from robotiq_s_model_control.msg import _SModel_robot_output  as outputMsg
 from dynamical_planner.gripper import Gripper
 from dynamical_planner.pdctrl import PdCtrl
 from dynamical_planner.action import Action
@@ -96,10 +96,10 @@ if __name__ == '__main__' :
 
 	rospy.Subscriber('current_target', String, handler_action_msgs)
 
-	gripper.grip_command.rACT = 1
-	gripper.grip_command.rGTO = 1
-	gripper.grip_command.rSPA = 255
-	gripper.grip_command.rFRA = 150
+	# gripper.grip_command.rACT = 1
+	# gripper.grip_command.rGTO = 1
+	# gripper.grip_command.rSPA = 255
+	# gripper.grip_command.rFRA = 150
 	# rospy.sleep(2)
 	# gripper.pub_gripper.publish(gripper.grip_command) #activate gripper
 	# rospy.sleep(5)

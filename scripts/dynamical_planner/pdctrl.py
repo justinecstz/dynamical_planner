@@ -11,11 +11,20 @@ from dynamical_planner.gripper import Gripper
 class PdCtrl:
 	def __init__(self):
 		# Real robot new positions
+		# self.joint_positions_p1 = 1*np.array([0.313771815355006, 0.7874442301146876, -0.35008257875556276, -1.605427980371526, 0.39355274195809514, 0.7924178032543101, -1.4842731591265332])
+		# self.joint_positions_p2 = 1*np.array([0.5628616530365289, 0.8266034640114479, -0.343280991826965, -1.548290132212003, 0.36961525944794194, 0.787609672383395, -1.4840846472048561])
+		# self.joint_positions_p3 = 1*np.array([0.7087980537375754, 0.9364973682354464, -0.3175523589760338, -1.3048212555591447, 0.32881175402628704, 0.9519498877320673, -1.483692343658399])
+		# self.joint_positions_home = 1*np.array([0.5569787767738359, 0.2807509613788765, -0.2521163338340084, -1.4935594952802898, 0.06308649381713503, 1.3422390616692874, -1.528839315708223])
+		
+		# FOR VIDEOS WITH SIMULATION
 		self.joint_positions_p1 = 1*np.array([0.313771815355006, 0.7874442301146876, -0.35008257875556276, -1.605427980371526, 0.39355274195809514, 0.7924178032543101, -1.4842731591265332])
 		self.joint_positions_p2 = 1*np.array([0.5628616530365289, 0.8266034640114479, -0.343280991826965, -1.548290132212003, 0.36961525944794194, 0.787609672383395, -1.4840846472048561])
-		self.joint_positions_p3 = 1*np.array([0.7087980537375754, 0.9364973682354464, -0.3175523589760338, -1.3048212555591447, 0.32881175402628704, 0.9519498877320673, -1.483692343658399])
+		self.joint_positions_p3 = 1*np.array([0.9087980537375754, 0.9364973682354464, -0.3175523589760338, -1.3048212555591447, 0.32881175402628704, 0.9519498877320673, -1.483692343658399])
 		self.joint_positions_home = 1*np.array([0.5569787767738359, 0.2807509613788765, -0.2521163338340084, -1.4935594952802898, 0.06308649381713503, 1.3422390616692874, -1.528839315708223])
-		self.joint_positions_handover = 1*np.array([0.644405747733462106, 1.30814689840694254, 0.1520219301975148, 0.407911064798659, -0.07193516616802327, 0.7915826375219599, -1.568347410379195])
+
+
+		# self.joint_positions_handover = 1*np.array([0.644405747733462106, 1.30814689840694254, 0.1520219301975148, 0.407911064798659, -0.07193516616802327, 0.7915826375219599, -1.568347410379195])
+		self.joint_positions_handover = 1*np.array([0.5569787767738359, 0.2807509613788765, -0.2521163338340084, -1.4935594952802898, 0.06308649381713503, 0.2022390616692874, -1.528839315708223])
 		self.pub = rospy.Publisher('action_state', String, queue_size = 10)
 		self.pub_for_gripper = rospy.Publisher('gripper_command', String, queue_size = 10)
 		self.ctrl_freq = 200
@@ -40,7 +49,7 @@ class PdCtrl:
 
 	def lin_ds(self,current_joint_position, target_state):
 		time = 0.02 #0.02
- 		K = 6 #10
+ 		K = 0.3*np.array([1,1,1,1,1,1,0.3])#10
 
 		delta_q = current_joint_position - self.q_old
 		self.q_old = current_joint_position
@@ -60,7 +69,7 @@ class PdCtrl:
 
 		rtol = 1e-4
 		atol = 1e-4
-		tol = 5e-3
+		tol = 5e-2
 
 		r = rospy.Rate(self.ctrl_freq)
 		
@@ -77,12 +86,10 @@ class PdCtrl:
 
 		# if self.current_action != "handover" :
 		if np.amax(diff_target) < tol and ((self.current_target==self.joint_positions_p1).all() or \
-    				(self.current_target==self.joint_positions_p2).all() or (self.current_target==self.joint_positions_p3).all()) :
+					(self.current_target==self.joint_positions_p2).all() or (self.current_target==self.joint_positions_p3).all()) :
 
 			self.position_reached = 1
-			action_state = "terminated"
 			self.pub.publish(action_state)
-			# print(self.position_reached)
 
 			if self.current_action == "pick1" or self.current_action == "pick2" or self.current_action == "pick3":
 				print("Closing gripper")
@@ -101,10 +108,11 @@ class PdCtrl:
 
 		# else:
 		# 	# Revoir condition
-		# 	if np.allclose(target[2:7],current_position[2:7], rtol, atol) and ((self.current_target==joint_positions_p1).all() or \
-		# 				(self.current_target==joint_positions_p2).all() or (self.current_target==joint_positions_p3).all() or (self.current_target==joint_positions_home).all()) :
-		# 		controller.position_reached = 1
+		# 	if np.amax(diff_target) < tol :
+		# 	# and ((self.current_target==joint_positions_p1).all() or \
+		# 				# (self.current_target==joint_positions_p2).all() or (self.current_target==joint_positions_p3).all() or (self.current_target==joint_positions_home).all()) :
+		# 		self.position_reached = 1
 		# 		action_state = "terminated"
-		# 		pub.publish(action_state)	
+		# 		self.pub.publish(action_state)	
 
 		r.sleep()
