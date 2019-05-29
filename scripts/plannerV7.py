@@ -103,7 +103,7 @@ def handler_state_msgs(data) :
                       if state[i] != action.precondition_pb[i] :
                          wrong_letter_pos = i
 
-                   if wrong_letter_pos :
+                   if wrong_letter_pos == 0 or wrong_letter_pos == 1 or wrong_letter_pos == 2 :
 
                       if action.precondition_pb[wrong_letter_pos] == "N" :
                          print("A cube appeared in position {0}".format(wrong_letter_pos+1))
