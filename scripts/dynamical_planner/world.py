@@ -25,6 +25,8 @@ class World(object):
 		self.old_state = ""
 		self.state = ""
 		self.state_full = ""
+		self.closed = 0
+		self.visible = []
 
 		self.prerecorded_x = []
 		self.prerecorded_x_sorted = []
@@ -44,6 +46,7 @@ class World(object):
 		self.x_position = []
 		self.y_position = []
 		self.z_position = []
+		self.visible = []
 
 
 	def observe_world(self):
@@ -95,6 +98,53 @@ class World(object):
 				self.prerecorded_x_sorted.append(self.prerecorded_x[x[k]])
 
 			print("Done.")
+
+
+	def sort_visible_items(self):
+		length = [i for i in range(len(self.visible_items))]
+		for k in length :
+			self.visible.append([self.visible_items[k],self.x_position[k],self.y_position[k],self.z_position[k]])
+
+		x = np.array(self.x_position) 
+		x = np.argsort(x)
+
+		# y = np.array(world.y_position)
+		# y = np.argsort(y)
+
+		total_items = len(self.visible_markers) + len(self.visible_cubes)
+
+		count = 0
+
+		for k in np.arange(total_items) :
+			while self.x_position[x[k]] != self.visible[count][1] :
+			# while world.y_position[y[k]] != visible[count][2] :
+				count = count + 1
+			if self.visible[count][0] != "G" and self.visible[count][0] != "B" :
+				self.state = self.state + "N"
+			else :
+				self.state = self.state + self.visible[count][0]
+			count = 0 
+
+	def full_artificial_state(self):
+		if "B" in self.state and "G" in self.state:
+			self.state_full = self.state + "N" 
+		elif "B" in self.state and not "G" in self.state:
+			if self.closed == 1 :
+				self.state_full = self.state + "G"
+			elif self.closed == 0 :
+				self.state_full = self.state + "N"
+
+		elif "G" in self.state and not "B" in self.state:
+			if self.closed == 1 :
+				self.state_full = self.state + "B"
+			elif self.closed == 0 :
+				self.state_full = self.state + "N"
+
+		elif not "B" in self.state and not "G" in self.state:
+			if self.closed == 1 :
+				self.state_full = self.state + self.old_state[-1]
+			elif self.closed == 0 :
+				self.state_full = self.state + "N"     
 
 
 

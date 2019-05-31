@@ -19,38 +19,40 @@ if __name__ == '__main__' :
    world.save_markers_pos()
 
    while not rospy.is_shutdown() :
-      visible = []
+      # visible = []
       world.reinitialize()
       world.observe_world()
 
-      length = [i for i in range(len(world.visible_items))]
-      for k in length :
-         visible.append([world.visible_items[k],world.x_position[k],world.y_position[k],world.z_position[k]])
+      # length = [i for i in range(len(world.visible_items))]
+      # for k in length :
+      #    visible.append([world.visible_items[k],world.x_position[k],world.y_position[k],world.z_position[k]])
 
-      x = np.array(world.x_position) 
-      x = np.argsort(x)
+      # x = np.array(world.x_position) 
+      # x = np.argsort(x)
 
-      # y = np.array(world.y_position)
-      # y = np.argsort(y)
+      # # y = np.array(world.y_position)
+      # # y = np.argsort(y)
 
-      total_items = len(world.visible_markers) + len(world.visible_cubes)
+      # total_items = len(world.visible_markers) + len(world.visible_cubes)
 
-      count = 0
+      # count = 0
 
-      for k in np.arange(total_items) :
-         while world.x_position[x[k]] != visible[count][1] :
-         # while world.y_position[y[k]] != visible[count][2] :
-            count = count + 1
-         if visible[count][0] != "G" and visible[count][0] != "B" :
-            world.state = world.state + "N"
-         else :
-            world.state = world.state + visible[count][0]
-         count = 0 
+      # for k in np.arange(total_items) :
+      #    while world.x_position[x[k]] != visible[count][1] :
+      #    # while world.y_position[y[k]] != visible[count][2] :
+      #       count = count + 1
+      #    if visible[count][0] != "G" and visible[count][0] != "B" :
+      #       world.state = world.state + "N"
+      #    else :
+      #       world.state = world.state + visible[count][0]
+      #    count = 0 
+
+      world.sort_visible_items()
 
       if world.listener_markers.canTransform("camera/0", "marker/7", rospy.Time.now() - rospy.Duration(1.0)) :
-         closed = 1
+         world.closed = 1
       else :
-         closed = 0
+         world.closed = 0
 
       if world.listener_markers.canTransform("camera/0", "marker/6", rospy.Time.now() - rospy.Duration(1.0)) :
          pub_handover.publish("handover")
@@ -62,12 +64,12 @@ if __name__ == '__main__' :
          world.state = ""
          state_letter = []
          state_pos = []
-         length = [i for i in range(len(visible))]
+         length = [i for i in range(len(world.visible))]
          length2 = [i for i in range(len(world.prerecorded_x_sorted))]
          for j in length :
             for k in length2 :
-               if abs(visible[j][1]-world.prerecorded_x_sorted[k]) < 0.05:
-                  state_letter.append([visible[j][0]])
+               if abs(world.visible[j][1]-world.prerecorded_x_sorted[k]) < 0.05:
+                  state_letter.append([world.visible[j][0]])
                   state_pos.append(k)
 
          for k in length2:
@@ -80,26 +82,27 @@ if __name__ == '__main__' :
             else:
                   world.state = world.state + "N"
 
-      if "B" in world.state and "G" in world.state:
-         world.state_full = world.state + "N" 
-      elif "B" in world.state and not "G" in world.state:
-         if closed == 1 :
-            world.state_full = world.state + "G"
-         elif closed == 0 :
-            world.state_full = world.state + "N"
+      # if "B" in world.state and "G" in world.state:
+      #    world.state_full = world.state + "N" 
+      # elif "B" in world.state and not "G" in world.state:
+      #    if closed == 1 :
+      #       world.state_full = world.state + "G"
+      #    elif closed == 0 :
+      #       world.state_full = world.state + "N"
 
-      elif "G" in world.state and not "B" in world.state:
-         if closed == 1 :
-            world.state_full = world.state + "B"
-         elif closed == 0 :
-            world.state_full = world.state + "N"
+      # elif "G" in world.state and not "B" in world.state:
+      #    if closed == 1 :
+      #       world.state_full = world.state + "B"
+      #    elif closed == 0 :
+      #       world.state_full = world.state + "N"
 
-      elif not "B" in world.state and not "G" in world.state:
-         if closed == 1 :
-            world.state_full = world.state + world.old_state[-1]
-         elif closed == 0 :
-            world.state_full = world.state + "N"     
+      # elif not "B" in world.state and not "G" in world.state:
+      #    if closed == 1 :
+      #       world.state_full = world.state + world.old_state[-1]
+      #    elif closed == 0 :
+      #       world.state_full = world.state + "N"     
 
+      world.full_artificial_state()
       world.old_state = world.state_full 
 
       if len(world.state_full) == 4 :
