@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(dynamical_planner)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -11,10 +11,11 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   robotiq_s_model_control
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -54,10 +55,10 @@ catkin_python_setup()
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#	FILES
-# 	ControlGripper.srv
-# )
+add_service_files(
+	FILES
+ 	ControlGripper.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -67,10 +68,10 @@ catkin_python_setup()
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+generate_messages(
+   DEPENDENCIES
+   std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -104,7 +105,7 @@ catkin_python_setup()
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES dynamical_planner
-  CATKIN_DEPENDS rospy std_msgs robotiq_s_model_control
+  CATKIN_DEPENDS rospy std_msgs robotiq_s_model_control message_runtime
   DEPENDS system_lib
 )
 
