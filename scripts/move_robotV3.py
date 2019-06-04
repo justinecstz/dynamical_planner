@@ -18,11 +18,6 @@ from dynamical_planner.action import Action
 def handler_action_msgs(data) :
 
 	controller.current_action = data.data
-	# if controller.position_reached == 1 and action.priority == 0 :
-	# 	controller.current_action = action.old_action
-	# elif controller.position_reached == 0 :
-
-	# rospy.loginfo(data)
 	
 	if controller.current_action == "pick1":
 		if controller.position_reached == 0 :
@@ -71,10 +66,7 @@ def handler_action_msgs(data) :
 			# gripper.gripper_goal = 'o'
 		else:
 			controller.current_target = controller.joint_positions_home
-
-	# elif controller.current_action == "home" or controller.current_action == "wait":
-	# 	controller.current_target = controller.joint_positions_home
-	# 	action.old_action = "wait"
+\
 	elif controller.current_action == "home":
 		controller.current_target = controller.joint_positions_home
 		action.old_action = "home"

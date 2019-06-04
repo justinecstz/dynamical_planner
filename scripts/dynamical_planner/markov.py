@@ -8,8 +8,8 @@ class Markov(object):
 		[6, "GNNB", 4, 1, 5, 0], [7, "NGNB", 3, 2, 5, 4], [8, "NNGB", 3, 3, 4, 5],
 		[9, "BNNG", 4, 2, 5, 3], [10, "NBNG", 3, 1, 5, 5], [11, "NNBG", 3, 0, 4, 4]]
 
-		#self.demos = [["NGBN", "NNBG", "GNBN", "GNNB", "GBNN"], ["NBGN", "NBNG", "GBNN"], ["BGNN", "BNNG", "BNGN", "NNGB", "NBGN", "NBNG", "GBNN"]]
 		self.demos = [["GBNN","GNNB","GNBN", "NNBG", "NGBN", "NGNB", "BGNN"],["GBNN","NBNG","NBGN","NNGB", "BNGN","BNNG","BGNN"]]
+		# self.demos = [["BGNN","NGNB","NGBN","NNBG","GNBN","GNNB","GBNN"],["BNNG","BNGN","NNGB","NBGN","NBNG","GBNN"]]
 		self.goal = self.demos[0][-1]
 		self.markov_results = []
 
@@ -51,10 +51,9 @@ class Markov(object):
 		#definition of the reward matrix
 		reward = np.zeros((12, 6))
 
-		# goal = demos[0][len(demos[0])-1]
-		length = [i for i in range(len(self.markov_map))]
-		# for k in np.arange(len(markov_map)) :
-		for k in length:
+		length_markov = [i for i in range(len(self.markov_map))]
+
+		for k in length_markov:
 		  if self.goal in self.markov_map[k] :
 		     goal_id = self.markov_map[k][0]
 		     break
@@ -90,36 +89,36 @@ class Markov(object):
 		#construction of policy
 		policy = np.zeros((12,6))
 		old_policy = np.ones((12,6))
+
 		nb_actions = 6
+		all_actions = [i for i in range(nb_actions)]
 		U = np.zeros((12, 2))
 		U[:,0], U[:,1] = 1, 2
-		gamma = 0.8 
+		gamma = 0
 		epsilon = 0.1
 		sums_on_actions = np.zeros((1, 6))
 		sum_1 = 0
 		sum_2 = 0
 
 		while not np.allclose(old_policy, policy) :
-		  for i in np.arange(len(self.markov_map)) :
+		  for i in length_markov :
 		     while np.absolute(U[i, 0] - U[i, 1]) > epsilon :
 		        U[i, 1] = U[i, 0]
-		        possible_actions = [self.markov_map[i][2], self.markov_map[i][4]]
-		        for j in np.arange(nb_actions) :
-		           for k in np.arange(len(self.markov_map)) : #s'
-		              sum_1 = sum_1 + proba_matrices[j][i, k] * (reward[i, j] + gamma * U[k, 1])
-		           sum_2 = sum_2 + sum_1 * policy[i,j]
+		        for j in all_actions :
+		            for k in length_markov : #s'
+		                sum_1 = sum_1 + proba_matrices[j][i, k] * (reward[i, j] + gamma * U[k, 1])
+		            sum_2 = sum_2 + sum_1 * policy[i,j]
 		        U[i, 0] = sum_2
 		        sum_1 = 0
 		        sum_2 = 0
 		     old_policy[i,:] = policy[i,:]
-		     for j in np.arange(nb_actions) :
-		        for k in np.arange(len(self.markov_map)) :
+		     for j in all_actions :
+		        for k in length_markov :
 		           sum_1 = sum_1 + proba_matrices[j][i, k] * (reward[i, j] + gamma * U[k, 1])
 		        sums_on_actions[0, j] = sum_1
 		        sum_1 = 0
+		     policy[i,:] = 0
 		     policy[i,np.argmax(sums_on_actions)] = 1 
 		     sums_on_actions = np.zeros((1, 6))
 
 		self.markov_results = [policy, goal_id]
-
-		# return markov_results

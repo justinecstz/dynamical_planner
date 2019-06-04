@@ -49,12 +49,12 @@ if __name__ == '__main__' :
 
       world.sort_visible_items()
 
-      if world.listener_markers.canTransform("camera/0", "marker/7", rospy.Time.now() - rospy.Duration(1.0)) :
+      if world.listener_markers.canTransform("camera/1", "marker/7", rospy.Time.now() - rospy.Duration(1.0)) :
          world.closed = 1
       else :
          world.closed = 0
 
-      if world.listener_markers.canTransform("camera/0", "marker/6", rospy.Time.now() - rospy.Duration(1.0)) :
+      if world.listener_markers.canTransform("camera/1", "marker/6", rospy.Time.now() - rospy.Duration(1.0)) :
          pub_handover.publish("handover")
       else :
          pub_handover.publish("no handover")

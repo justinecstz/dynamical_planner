@@ -52,23 +52,23 @@ class World(object):
 	def observe_world(self):
 		for id_marker in self.ids_markers :
 			full_id = "marker/" + str(id_marker)
-			if self.listener_markers.canTransform("camera/0", full_id, rospy.Time.now() - rospy.Duration(1.0)) :
+			if self.listener_markers.canTransform("camera/1", full_id, rospy.Time.now() - rospy.Duration(1.0)) :
 				self.visible_markers.append(id_marker)
-				(position,quaternion) = self.listener_markers.lookupTransform("camera/0", full_id, rospy.Time(0))
+				(position,quaternion) = self.listener_markers.lookupTransform("camera/1", full_id, rospy.Time(0))
 				self.x_position_markers.append(position[0])
 				self.y_position_markers.append(position[1])
 				self.z_position_markers.append(position[2])
 
-		if self.listener_cubes.canTransform("camera/0","green",rospy.Time.now() - rospy.Duration(1.0)) :
+		if self.listener_cubes.canTransform("camera/1","green",rospy.Time.now() - rospy.Duration(1.0)) :
 			self.visible_cubes.append("G")
-			(position,quaternion) = self.listener_cubes.lookupTransform("camera/0", "green", rospy.Time(0))
+			(position,quaternion) = self.listener_cubes.lookupTransform("camera/1", "green", rospy.Time(0))
 			self.x_position_cubes.append(position[0]*0.0006-0.218) 
 			self.y_position_cubes.append(position[1]*0.0007-0.1972)
 			self.z_position_cubes.append(position[2])
 
-		if self.listener_cubes.canTransform("camera/0", "blue", rospy.Time.now() - rospy.Duration(1.0)) :
+		if self.listener_cubes.canTransform("camera/1", "blue", rospy.Time.now() - rospy.Duration(1.0)) :
 			self.visible_cubes.append("B")
-			(position,quaternion) = self.listener_cubes.lookupTransform("camera/0","blue", rospy.Time(0))
+			(position,quaternion) = self.listener_cubes.lookupTransform("camera/1","blue", rospy.Time(0))
 			self.x_position_cubes.append(position[0]*0.0006-0.218)
 			self.y_position_cubes.append(position[1]*0.0007-0.1972)
 			self.z_position_cubes.append(position[2])
@@ -85,9 +85,9 @@ class World(object):
 		if confirmation == "y":
 			for id_marker in self.ids_markers :
 				full_id = "marker/" + str(id_marker)
-				if self.listener_markers.canTransform("camera/0", full_id, rospy.Time.now() - rospy.Duration(1.0)) :
+				if self.listener_markers.canTransform("camera/1", full_id, rospy.Time.now() - rospy.Duration(1.0)) :
 					self.visible_markers.append(id_marker)
-					(position,quaternion) = self.listener_markers.lookupTransform("camera/0", full_id, rospy.Time(0))
+					(position,quaternion) = self.listener_markers.lookupTransform("camera/1", full_id, rospy.Time(0))
 					self.prerecorded_x.append(position[0])
 
 			x = np.array(self.prerecorded_x) 
@@ -141,10 +141,19 @@ class World(object):
 				self.state_full = self.state + "N"
 
 		elif not "B" in self.state and not "G" in self.state:
-			if self.closed == 1 :
-				self.state_full = self.state + self.old_state[-1]
-			elif self.closed == 0 :
-				self.state_full = self.state + "N"     
+			# if self.closed == 1 :
+			# 	self.state_full = self.state + self.old_state[-2]
+			# elif self.closed == 0 :
+			# 	self.state_full = self.state + "N"   
+			length_state = [i for i in range(len(self.old_state))] 
+			if self.closed == 1:
+				for i in length_state:
+					if self.old_state[i] != "N":
+						self.state_full = self.state + self.old_state[i]
+			else:
+				self.state_full = self.state + "N" 
+
+
 
 
 

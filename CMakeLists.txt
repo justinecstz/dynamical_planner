@@ -55,9 +55,8 @@ catkin_python_setup()
 
 ## Generate services in the 'srv' folder
 # add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
+#	FILES
+# 	ControlGripper.srv
 # )
 
 ## Generate actions in the 'action' folder

@@ -4,15 +4,18 @@ import rospy
 from std_msgs.msg import String
 # from robotiq_s_model_control.msg import _SModel_robot_input  as inputMsg
 # from robotiq_s_model_control.msg import _SModel_robot_output  as outputMsg
+from srv import ControlGripper
+from srv import ControlGripperResponse
 
 class Gripper(object):
 	def __init__(self):
-		self.gripper_status = 0
+		self.gripper_status = 160
 		# self.sub_gripper = rospy.Subscriber("SModelRobotInput", inputMsg.SModel_robot_input, self.gripper_status_cb)
-		self.sub_command = rospy.Subscriber("gripper_command", String, self.do_gripper_command)
+		# self.sub_command = rospy.Subscriber("gripper_command", String, self.handle_gripper_command)
 		# self.grip_command = outputMsg.SModel_robot_output()
 		# self.pub_gripper = rospy.Publisher("SModelRobotOutput", outputMsg.SModel_robot_output, queue_size = 1);
 		self.gripper_goal = "o"
+		self.service = rospy.Service('gripper_command',self.ControlGripper,handle_gripper_command)
 		print "initialized"
 
 	def gripper_status_cb(self,data):
@@ -20,27 +23,29 @@ class Gripper(object):
 		print self.gripper_status
 		# print "in callback"
 
-	def do_gripper_command(self,data):
+	def handle_gripper_command(self,req):
 		
-		command = data.data
+		command = req.command
 
-		if command == "c":
-			self.grip_command.rACT = 1
-			self.grip_command.rGTO = 1
-			self.grip_command.rSPA = 255
-			self.grip_command.rFRA = 150
-			self.grip_command.rPRA = 255
-			self.pub_gripper.publish(self.grip_command)
-			while self.gripper_status < 200 :
+		if command == 1:
+			# self.grip_command.rACT = 1
+			# self.grip_command.rGTO = 1
+			# self.grip_command.rSPA = 255
+			# self.grip_command.rFRA = 150
+			# self.grip_command.rPRA = 255
+			# self.pub_gripper.publish(self.grip_command)
+			while self.gripper_status < 150:
 				print(self.gripper_status)
 				print("Closing gripper...")
-		elif command == "o":
-			self.grip_command.rACT = 1
-			self.grip_command.rGTO = 1
-			self.grip_command.rSPA = 255
-			self.grip_command.rFRA = 150
-			self.grip_command.rPRA = 0
-			self.pub_gripper.publish(self.grip_command)
+		elif command == 2:
+			# self.grip_command.rACT = 1
+			# self.grip_command.rGTO = 1
+			# self.grip_command.rSPA = 255
+			# self.grip_command.rFRA = 150
+			# self.grip_command.rPRA = 0
+			# self.pub_gripper.publish(self.grip_command)
 			while self.gripper_status > 10:
 				print(self.gripper_status)
 				print("Opening gripper...")
+
+		return ControlGripperResponse(True)

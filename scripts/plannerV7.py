@@ -119,11 +119,6 @@ def handler_state_msgs(data) :
            elif state == action.precondition:
               pub_target.publish(action.current_target)
 
-
-           # if action.problem == 1 : #just recovering from a problem
-           #    pub_target.publish(action.current_target)
-           #    action.problem = 0 
-
         else:
            # if action.old_action != 10 :
             action.current_target = "home"
@@ -133,10 +128,7 @@ def handler_state_msgs(data) :
 
      #if state is not in Markov Map, a problem happened
      elif is_in_markov_map == 0 :
-        # if action.problem == 0 :
-        #    action.problem = 1
-
-           #check what happened
+       #check what happened
        length = np.arange(len(state))
        for i in length :
           if state[i] != action.precondition[i] :
@@ -153,11 +145,9 @@ def handler_state_msgs(data) :
              action.current_target = "wait"
              action.pb_on_pos = 1
 
-        # elif action.problem == 1 and action.terminated == 0 : 
        if action.terminated == 0 :  
           print("Action goes on...")
 
-        # elif action.problem == 1 and action.terminated == 1 :
        elif action.terminated == 1 :
           print("Waiting...")
           action.current_target = "wait"
