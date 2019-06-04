@@ -66,7 +66,7 @@ def handler_action_msgs(data) :
 			# gripper.gripper_goal = 'o'
 		else:
 			controller.current_target = controller.joint_positions_home
-\
+
 	elif controller.current_action == "home":
 		controller.current_target = controller.joint_positions_home
 		action.old_action = "home"

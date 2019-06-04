@@ -52,13 +52,13 @@ class PdCtrl:
 
 	def lin_ds(self,current_joint_position, target_state):
 		time = 0.02 #0.02
- 		K = 0.3*np.array([1,1,1,1,1,1,0.3])#10
+ 		K = 3*np.array([1,1,1,1,1,1,0.3])#15
  		alpha = 0.8
 
 		delta_q = current_joint_position - self.q_old
 		self.q_old = current_joint_position
 
-		q_speed_max = [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.001]
+		q_speed_max = [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.0001]
 		error = current_joint_position-target_state  
 
 		q_dot = -K*error
@@ -67,15 +67,13 @@ class PdCtrl:
 			if abs(q_dot[i]) > q_speed_max[i]:
 				q_dot[i] = np.sign(q_dot[i])*q_speed_max[i]
 
-		#self.q_send = q_dot*time + self.q_old
-		self.q_send = alpha*(q_dot*time + self.q_old)+(1-alpha)*self.old_q_send
-		self.old_q_send = self.q_send
+		self.q_send = q_dot*time + self.q_old
+		# self.q_send = alpha*(q_dot*time + self.q_old)+(1-alpha)*self.old_q_send
+		# self.old_q_send = self.q_send
 
 	def do_action(self,target) :
 
-		rtol = 1e-4
-		atol = 1e-4
-		tol = 5e-2
+		tol = 1e-2
 
 		r = rospy.Rate(self.ctrl_freq)
 		
@@ -96,11 +94,12 @@ class PdCtrl:
 			self.position_reached = 1
 			self.pub.publish(action_state)
 
-			if self.current_action == "pick1" or self.current_action == "pick2" or self.current_action == "pick3":
+			if self.current_action == "pick1" or self.current_action == "pick2" or self.current_action == "pick3": #if self.current_action[:-1] == "pick":
 				print("Closing gripper")
 				msg = ControlGripperRequest()
 				msg.command = ControlGripperRequest.CLOSE
-				res = self.gripper_service(msg)
+				# print(msg.command)
+				# res = self.gripper_service(msg)
 				# self.gripper_service("c")
 				# self.pub_for_gripper.publish("c")
 
@@ -110,7 +109,7 @@ class PdCtrl:
 				# self.gripper_service("o")
 				msg = ControlGripperRequest()
 				msg.command = ControlGripperRequest.OPEN
-				res = self.gripper_service(msg)
+				# res = self.gripper_service(msg)
 				# self.pub_for_gripper.publish("o")
 	
 

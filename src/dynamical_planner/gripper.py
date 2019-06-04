@@ -9,13 +9,12 @@ from srv import ControlGripperResponse
 
 class Gripper(object):
 	def __init__(self):
-		self.gripper_status = 160
+		self.gripper_status = 0
 		# self.sub_gripper = rospy.Subscriber("SModelRobotInput", inputMsg.SModel_robot_input, self.gripper_status_cb)
-		# self.sub_command = rospy.Subscriber("gripper_command", String, self.handle_gripper_command)
 		# self.grip_command = outputMsg.SModel_robot_output()
 		# self.pub_gripper = rospy.Publisher("SModelRobotOutput", outputMsg.SModel_robot_output, queue_size = 1);
 		self.gripper_goal = "o"
-		self.service = rospy.Service('gripper_command',self.ControlGripper,handle_gripper_command)
+		self.service = rospy.Service('gripper_command',ControlGripper,self.handle_gripper_command)
 		print "initialized"
 
 	def gripper_status_cb(self,data):
@@ -26,8 +25,9 @@ class Gripper(object):
 	def handle_gripper_command(self,req):
 		
 		command = req.command
+		# print(command)
 
-		if command == 1:
+		if command == 2:
 			# self.grip_command.rACT = 1
 			# self.grip_command.rGTO = 1
 			# self.grip_command.rSPA = 255
@@ -37,7 +37,7 @@ class Gripper(object):
 			while self.gripper_status < 150:
 				print(self.gripper_status)
 				print("Closing gripper...")
-		elif command == 2:
+		elif command == 1:
 			# self.grip_command.rACT = 1
 			# self.grip_command.rGTO = 1
 			# self.grip_command.rSPA = 255
