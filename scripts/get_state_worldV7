@@ -47,7 +47,7 @@ if __name__ == '__main__' :
             world.state = world.state + visible[count][0]
          count = 0 
 
-      if world.listener_markers.canTransform("camera/0", "marker/6", rospy.Time.now() - rospy.Duration(1.0)) :
+      if world.listener_markers.canTransform("camera/1", "marker/6", rospy.Time.now() - rospy.Duration(1.0)) :
          pub_handover.publish("handover")
       else :
          pub_handover.publish("no handover")
@@ -78,21 +78,21 @@ if __name__ == '__main__' :
       if "B" in world.state and "G" in world.state:
          world.state_full = world.state + "N" 
       elif "B" in world.state and not "G" in world.state:
-         if gripper.gripper_status < 250 and gripper.gripper_status > 225:
+         if gripper.gripper_status > 110 :
             world.state_full = world.state + "G"
-         elif gripper.gripper_status < 10 :
+         elif gripper.gripper_status < 110 :
             world.state_full = world.state + "N"
 
       elif "G" in world.state and not "B" in world.state:
-         if gripper.gripper_status < 250 and gripper.gripper_status > 225:
+         if gripper.gripper_status > 110 :
             world.state_full = world.state + "B"
-         elif gripper.gripper_status < 10 :
+         elif gripper.gripper_status < 110 :
             world.state_full = world.state + "N"
 
       elif not "B" in world.state and not "G" in world.state:
-         if gripper.gripper_status < 250 and gripper.gripper_status > 225:
+         if gripper.gripper_status > 110 :
             world.state_full = world.state + world.old_state[-1]
-         elif gripper.gripper_status < 10 :
+         elif gripper.gripper_status < 110 :
             world.state_full = world.state + "N"     
 
       world.old_state = world.state_full 
